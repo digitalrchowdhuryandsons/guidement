@@ -2,6 +2,10 @@ import { Link } from "react-router-dom";
 import { ArrowRight, BookOpen, Users, Award, TrendingUp, Code, Briefcase, Palette, Camera, Music, Heart, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import SkillStreamView from '@/components/SkillStreamView';
+import KnowledgeInvestView from '@/components/KnowledgeInvestView';
+import ZootyView from '@/components/ZootyView';
+import LabAcademyView from '@/components/LabAcademyView';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseCard } from "@/components/CourseCard";
@@ -34,6 +38,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen">
+       <SkillStreamView />
       {/* Hero */}
       <section className="relative overflow-hidden py-20 md:py-32">
         <div className="absolute inset-0 gradient-hero opacity-10" />
@@ -143,7 +148,12 @@ export default function Landing() {
           </div>
         </section>
       )}
+<section className="py-16 md:py-24">
 
+ <KnowledgeInvestView />
+ <ZootyView />
+ <LabAcademyView />
+  </section>
       {/* CTA */}
       <section className="py-16 md:py-24">
         <div className="container">
