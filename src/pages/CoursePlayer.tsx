@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+
 import {
   ChevronLeft,
   ChevronRight,
@@ -18,9 +19,7 @@ import {
   Lock,
   ChevronDown,
   ChevronUp,
-  BookOpen,
   Award,
-  Download,
    Bell,
   MessageCircle,
   Settings,
@@ -67,6 +66,11 @@ export default function CoursePlayer() {
   const [quizSectionId, setQuizSectionId] = useState<string | null>(null);
   const [revisionQueue, setRevisionQueue] = useState<string[]>([]);
   const [quizzedSections, setQuizzedSections] = useState<Set<string>>(new Set());
+  const [recordingBlocked, setRecordingBlocked] = useState(false);
+  const [blockReason, setBlockReason] = useState<string>(
+    "Screen recording, screen sharing, or switching tabs is not allowed during playback. Return focus to this window to resume."
+  );
+  const [devToolsOpen, setDevToolsOpen] = useState(false);
 
   // Fetch course by slug
   const { data: course, isLoading: courseLoading } = useQuery({
@@ -148,19 +152,16 @@ export default function CoursePlayer() {
   useEffect(() => {
     if (!allLectures.length || activeLectureId) return;
     if (progressData && progressData.length > 0) {
-      // Find the last uncompleted lecture, or the one with the most recent update
       const incomplete = progressData
         .filter((p) => !p.completed)
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
       if (incomplete.length > 0) {
         setActiveLectureId(incomplete[0].lecture_id);
-        // Expand its section
         const lecture = allLectures.find((l) => l.id === incomplete[0].lecture_id);
         if (lecture) setExpandedSections(new Set([lecture.section_id]));
         return;
       }
     }
-    // Default: first lecture
     setActiveLectureId(allLectures[0].id);
     if (sections?.[0]) setExpandedSections(new Set([sections[0].id]));
   }, [allLectures.length, progressData, activeLectureId]);
@@ -242,11 +243,9 @@ export default function CoursePlayer() {
       completed: true,
       watchTime: videoRef.current.duration,
     });
-    // If we're in revision mode, advance to the next failed lesson
     setTimeout(() => advanceRevisionQueueRef.current?.(), 200);
   }, [activeLectureId]);
 
-  // Use a ref to break the circular dep between handleVideoEnded and advanceRevisionQueue
   const advanceRevisionQueueRef = useRef<(() => void) | null>(null);
 
   // Save on pause
@@ -260,10 +259,133 @@ export default function CoursePlayer() {
     });
   }, [activeLectureId]);
 
+  // ─── Anti screen-recording + keyboard/context-menu protection ───────────────
+  // Single unified effect: visibility, blur/focus, PiP, context menu,
+  // keyboard shortcuts (devtools, print, snip, save), drag, clipboard clear.
+  useEffect(() => {
+    const video = videoRef.current;
+
+    const block = (reason?: string) => {
+      setBlockReason(
+        reason ??
+          "Screen recording, screen sharing, or switching tabs is not allowed during playback. Return focus to this window to resume."
+      );
+      setRecordingBlocked(true);
+      if (videoRef.current && !videoRef.current.paused) videoRef.current.pause();
+    };
+
+    const unblock = () => {
+      // Only unblock if devtools are not open
+      setDevToolsOpen((dt) => {
+        if (!dt) setRecordingBlocked(false);
+        return dt;
+      });
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) block();
+      else unblock();
+    };
+
+    const onContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      block();
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      const ctrlOrMeta = e.ctrlKey || e.metaKey;
+      const isF12 = key === "f12";
+      const isDevTools =
+        (ctrlOrMeta && e.shiftKey && ["i", "j", "c"].includes(key)) ||
+        (ctrlOrMeta && key === "u") ||  // view source
+        (ctrlOrMeta && key === "s") ||  // save page
+        (ctrlOrMeta && key === "p") ||  // print
+        (ctrlOrMeta && e.shiftKey && key === "s"); // snip shortcut
+      const isPrintScreen = key === "printscreen";
+      const isWinCapture =
+        (e as any).getModifierState?.("Meta") &&
+        (key === "s" || key === "g" || key === "r");
+
+      if (isF12 || isDevTools || isPrintScreen || isWinCapture) {
+        e.preventDefault();
+        e.stopPropagation();
+        block();
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "PrintScreen") {
+        navigator.clipboard?.writeText("").catch(() => {});
+        block();
+      }
+    };
+
+    const onDragStart = (e: DragEvent) => e.preventDefault();
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("blur", block);
+    window.addEventListener("focus", unblock);
+    document.addEventListener("contextmenu", onContextMenu);
+    document.addEventListener("keydown", onKeyDown, true);
+    document.addEventListener("keyup", onKeyUp, true);
+    video?.addEventListener("enterpictureinpicture", block);
+    video?.addEventListener("leavepictureinpicture", unblock);
+    video?.addEventListener("dragstart", onDragStart);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("blur", block);
+      window.removeEventListener("focus", unblock);
+      document.removeEventListener("contextmenu", onContextMenu);
+      document.removeEventListener("keydown", onKeyDown, true);
+      document.removeEventListener("keyup", onKeyUp, true);
+      video?.removeEventListener("enterpictureinpicture", block);
+      video?.removeEventListener("leavepictureinpicture", unblock);
+      video?.removeEventListener("dragstart", onDragStart);
+    };
+  }, [activeLectureId]);
+
+  // ─── DevTools detection ────────────────────────────────────────────
+  // Uses only the window outer/inner size gap — the only reliable
+  // cross-browser signal without false positives. The element-getter,
+  // Function.toString, and debugger-timing traps were removed because
+  // they fire even when DevTools is closed on most browsers.
+  useEffect(() => {
+    const DEVTOOLS_MSG = "Developer tools detected. Close DevTools to resume playback.";
+    const THRESHOLD = 160;
+
+    const isOpen = () =>
+      window.outerWidth - window.innerWidth > THRESHOLD ||
+      window.outerHeight - window.innerHeight > THRESHOLD;
+
+    const runCheck = () => {
+      if (isOpen()) {
+        setDevToolsOpen(true);
+        setBlockReason(DEVTOOLS_MSG);
+        setRecordingBlocked(true);
+        if (videoRef.current && !videoRef.current.paused) videoRef.current.pause();
+      } else {
+        setDevToolsOpen((prev) => {
+          if (prev) setRecordingBlocked(false);
+          return false;
+        });
+      }
+    };
+
+    const intervalId = window.setInterval(runCheck, 1000);
+    window.addEventListener("resize", runCheck);
+    runCheck();
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("resize", runCheck);
+    };
+  }, []);
+
   const navigateLecture = (direction: "prev" | "next") => {
     const newIndex = direction === "next" ? activeIndex + 1 : activeIndex - 1;
     if (newIndex >= 0 && newIndex < allLectures.length) {
-      // Save current progress before navigating
       if (videoRef.current && activeLectureId) {
         saveMutation.mutate({
           lectureId: activeLectureId,
@@ -329,7 +451,6 @@ export default function CoursePlayer() {
     });
   };
 
-  // Overall progress
   const completedCount = allLectures.filter((l) => isLectureCompleted(l.id)).length;
   const overallProgress = allLectures.length > 0 ? Math.round((completedCount / allLectures.length) * 100) : 0;
 
@@ -352,14 +473,13 @@ export default function CoursePlayer() {
   // Trigger chapter quiz when the last lecture of a section is completed
   useEffect(() => {
     if (!sections || !activeLecture || !user) return;
-    if (revisionQueue.length > 0) return; // don't pop quiz mid-revision
+    if (revisionQueue.length > 0) return;
     if (quizSectionId) return;
     const section = sections.find((s) => s.id === activeLecture.section_id);
     if (!section || section.lectures.length === 0) return;
     const allDone = section.lectures.every((l) => isLectureCompleted(l.id));
     if (!allDone) return;
     if (quizzedSections.has(section.id)) return;
-    // Only open if the section actually has quiz questions
     (async () => {
       const { count } = await supabase
         .from("quiz_questions")
@@ -372,7 +492,6 @@ export default function CoursePlayer() {
     })();
   }, [progressData, activeLectureId, sections, user]);
 
-  // After completing a revision lecture, advance to the next failed lesson in the queue
   const advanceRevisionQueue = useCallback(() => {
     if (revisionQueue.length === 0 || !activeLectureId) return;
     const remaining = revisionQueue.filter((id) => id !== activeLectureId);
@@ -397,12 +516,10 @@ export default function CoursePlayer() {
     }
   }, [revisionQueue, activeLectureId, sections]);
 
-  // Keep the ref pointing at the latest callback so handleVideoEnded can invoke it
   useEffect(() => {
     advanceRevisionQueueRef.current = advanceRevisionQueue;
   }, [advanceRevisionQueue]);
 
-  // Loading states
   if (authLoading || courseLoading || purchaseLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -414,8 +531,6 @@ export default function CoursePlayer() {
   if (!user) return <Navigate to="/auth" />;
   if (!course) return <Navigate to="/courses" />;
 
-  // Owner (instructor) or purchaser gets full access; otherwise allow preview-only
-  // (RLS already filters lectures to first-section / is_preview for non-purchasers)
   const isOwner = course.instructor_id === user.id;
   const hasAccess = !!purchase || isOwner;
   const previewLectures = allLectures.filter((l) => l.video_url);
@@ -429,12 +544,15 @@ export default function CoursePlayer() {
     <div className="min-h-[calc(100vh-4rem)] bg-[#eeeff5] p-4">
       <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
         <aside className="rounded-2xl border bg-[#f7f8fc] p-4 shadow-sm">
-          <p className="mb-6 font-display text-xl font-bold">Guidement</p>
+          <p className="mb-6 font-display text-xl font-bold">
+                <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold">
+          <img src="/logo.png" alt="" className="w-30 h-20" />
+        </Link>
+         </p>
           <div className="space-y-1 text-sm">
             <p className="rounded-lg px-3 py-2">Home</p>
             <p className="rounded-lg px-3 py-2">Bookmark</p>
             <p className="rounded-lg bg-violet-600 px-3 py-2 font-semibold text-white">Courses</p>
-            <p className="rounded-lg px-3 py-2">Tutorials</p>
             <p className="rounded-lg px-3 py-2">Workshop</p>
             <p className="rounded-lg px-3 py-2">Resources</p>
           </div>
@@ -465,16 +583,34 @@ export default function CoursePlayer() {
               <div>
                 <div className="overflow-hidden rounded-xl bg-black">
                   {activeLecture?.video_url ? (
-                    <video
-                      ref={videoRef}
-                      key={activeLecture.id}
-                      src={activeLecture.video_url}
-                      controls
-                      autoPlay
-                      className="aspect-video w-full object-cover"
-                      onEnded={handleVideoEnded}
-                      onPause={handlePause}
-                    />
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      <video
+                        ref={videoRef}
+                        key={activeLecture.id}
+                        src={activeLecture.video_url}
+                        controls
+                        autoPlay
+                        controlsList="nodownload noremoteplayback"
+                        disablePictureInPicture
+                        onContextMenu={(e) => e.preventDefault()}
+                        className={`aspect-video w-full object-cover select-none ${
+                          recordingBlocked ? "invisible" : ""
+                        }`}
+                        onEnded={handleVideoEnded}
+                        onPause={handlePause}
+                      />
+                      {recordingBlocked && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 text-center p-6">
+                          <Lock className="h-10 w-10 text-destructive" />
+                          <h3 className="font-display text-lg font-semibold text-foreground">
+                            Playback paused
+                          </h3>
+                          <p className="text-sm text-muted-foreground max-w-sm">
+                            {blockReason}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <div className="flex aspect-video items-center justify-center text-white">
                       <PlayCircle className="mr-2 h-5 w-5" /> No video available
@@ -632,6 +768,7 @@ export default function CoursePlayer() {
           </div>
         </div>
       </div>
+
       <Dialog open={buyDialogOpen} onOpenChange={setBuyDialogOpen}>
         <DialogContent>
           <DialogHeader>
