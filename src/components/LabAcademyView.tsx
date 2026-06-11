@@ -157,7 +157,7 @@ export default function LabAcademyView() {
             {/* ROW 1: Auto Slides Left (Profile and Team cards) */}
             <div className="w-screen relative left-1/2 -translate-x-1/2 overflow-hidden flex flex-col gap-2 pointer-events-auto">
               <div className="px-4 text-xs font-mono font-bold uppercase tracking-wider text-stone-400 max-w-7xl mx-auto w-full">
-                ⚡ Row 1 · Team Profiles & Groups (Moving Left)
+          
               </div>
               
               <div 
@@ -286,9 +286,7 @@ export default function LabAcademyView() {
 
             {/* ROW 2: Auto Slides Right (Creative Minds main layouts) */}
             <div className="w-screen relative left-1/2 -translate-x-1/2 overflow-hidden flex flex-col gap-2 pointer-events-auto">
-              <div className="px-4 text-xs font-mono font-bold uppercase tracking-wider text-stone-400 max-w-7xl mx-auto w-full">
-                ⚡ Row 2 · Core Educational Directions (Moving Right)
-              </div>
+      
               
               <div 
                 className={`flex gap-6 w-max animate-marquee-right ${paused ? 'pause-marquee' : ''}`}
@@ -422,9 +420,7 @@ export default function LabAcademyView() {
 
             {/* ROW 3: Auto Slides Left (# Make together Active interactive canvas) */}
             <div className="w-screen relative left-1/2 -translate-x-1/2 overflow-hidden flex flex-col gap-2 pointer-events-auto">
-              <div className="px-4 text-xs font-mono font-bold uppercase tracking-wider text-stone-400 max-w-7xl mx-auto w-full">
-                ⚡ Row 3 · Collaborative Artboards & Labs (Moving Left)
-              </div>
+        
               
               <div 
                 className={`flex gap-6 w-max animate-marquee-left ${paused ? 'pause-marquee' : ''}`}

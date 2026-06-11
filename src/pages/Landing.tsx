@@ -9,10 +9,26 @@ import LabAcademyView from '@/components/LabAcademyView';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CourseCard } from "@/components/CourseCard";
+import { SiteAnnouncement } from "@/components/SiteAnnouncement";
 
 const iconMap: Record<string, any> = {
   Code, Briefcase, Palette, TrendingUp, Camera, Music, Heart, Target,
 };
+
+
+const DEFAULT_HERO = {
+  eyebrow: "",
+  title: "Learn Without Limits",
+  highlight: "Limits",
+  subtitle: "Access thousands of courses from world-class instructors. Build skills that matter, at your own pace.",
+  primaryCtaLabel: "Explore Courses",
+  primaryCtaHref: "/courses",
+  secondaryCtaLabel: "Become an Instructor",
+  secondaryCtaHref: "/become-instructor",
+  imageUrl: "",
+};
+
+
 
 export default function Landing() {
   const { data: categories } = useQuery({
@@ -22,6 +38,20 @@ export default function Landing() {
       return data || [];
     },
   });
+
+   const { data: heroRow } = useQuery({
+    queryKey: ["site-content", "hero"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_content").select("*").eq("key", "hero").maybeSingle();
+      return data;
+    },
+    staleTime: 60_000,
+  });
+  const hero = (heroRow?.enabled ? { ...DEFAULT_HERO, ...(heroRow.data as any) } : DEFAULT_HERO);
+  const titleParts = hero.highlight && hero.title.includes(hero.highlight)
+    ? hero.title.split(hero.highlight)
+    : null;
+
 
   const { data: featuredCourses } = useQuery({
     queryKey: ["featured-courses"],
@@ -38,31 +68,47 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen">
+            <SiteAnnouncement />
        <SkillStreamView />
       {/* Hero */}
       <section className="relative overflow-hidden py-20 md:py-32">
         <div className="absolute inset-0 gradient-hero opacity-10" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,hsl(262_83%_58%/0.08),transparent_70%)]" />
+         {hero.imageUrl && (
+          <div className="absolute inset-0 opacity-20 bg-cover bg-center" style={{ backgroundImage: `url(${hero.imageUrl})` }} />
+        )}
         <div className="container relative">
           <div className="mx-auto max-w-3xl text-center space-y-6 animate-fade-in">
+             {hero.eyebrow && <p className="text-sm uppercase tracking-widest text-primary">{hero.eyebrow}</p>}
             <h1 className="font-display text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl">
               Learn Without{" "}
               <span className="bg-gradient-to-r from-primary to-[hsl(280,90%,65%)] bg-clip-text text-transparent">
                 Limits
               </span>
+                          {titleParts ? (
+                <>
+                  {titleParts[0]}
+                  <span className="bg-gradient-to-r from-primary to-[hsl(280,90%,65%)] bg-clip-text text-transparent">
+                    {hero.highlight}
+                  </span>
+                  {titleParts[1]}
+                </>
+              ) : (
+                hero.title
+              )}
             </h1>
             <p className="text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto">
-              Access thousands of courses from world-class instructors. Build skills that matter, at your own pace.
+            {hero.subtitle}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link to="/courses">
+                <Link to={hero.primaryCtaHref}>
                 <Button size="lg" className="gradient-primary text-primary-foreground rounded-full px-8 shadow-glow">
-                  Explore Courses <ArrowRight className="ml-2 h-4 w-4" />
+                  {hero.primaryCtaLabel} <ArrowRight className="ml-2 h-4 w-4" /> <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/become-instructor">
+              <Link to={hero.secondaryCtaHref}>
                 <Button size="lg" variant="outline" className="rounded-full px-8">
-                  Become an Instructor
+                  {hero.secondaryCtaLabel}
                 </Button>
               </Link>
             </div>
@@ -149,7 +195,6 @@ export default function Landing() {
         </section>
       )}
 <section className="py-16 md:py-24">
-
  <KnowledgeInvestView />
  <ZootyView />
  <LabAcademyView />

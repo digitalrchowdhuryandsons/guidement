@@ -213,39 +213,7 @@ export default function Auth() {
             Continue with Google
           </Button>
 
-          <div className="mt-6 rounded-lg border bg-muted/40 p-4">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Demo accounts
-            </div>
-            <p className="mb-3 text-xs text-muted-foreground">
-              Click to fill, then press Sign In. Run the seed function once if these don't exist yet.
-            </p>
-            <div className="space-y-2">
-              {[
-                { label: "Admin", email: "admin@guidement.demo", password: "Admin123!" },
-                { label: "Instructor", email: "instructor@guidement.demo", password: "Instructor123!" },
-              ].map((d) => (
-                <button
-                  key={d.email}
-                  type="button"
-                  onClick={async () => {
-                    setLoginEmail(d.email);
-                    setLoginPassword(d.password);
-                    try {
-                      await supabase.functions.invoke("seed-demo-accounts");
-                    } catch {
-                      // ignore — seed is best-effort
-                    }
-                    toast.success(`${d.label} credentials filled`);
-                  }}
-                  className="flex w-full items-center justify-between rounded-md border bg-background px-3 py-2 text-left text-xs transition hover:bg-accent"
-                >
-                  <span className="font-medium">{d.label}</span>
-                  <span className="text-muted-foreground">{d.email}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          
         </CardContent>
       </Card>
     </div>
