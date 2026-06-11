@@ -10,9 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Plus, Trash2, GripVertical, Upload, Check } from "lucide-react";
 import { toast } from "sonner";
 import { ChapterQuizEditor } from "@/components/instructor/ChapterQuizEditor";
+import { uploadLectureVideo } from "@/lib/uploadLectureVideo";
 
 export default function EditCourse() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -42,10 +44,12 @@ export default function EditCourse() {
   });
 
   const [saving, setSaving] = useState(false);
+  const [progressMap, setProgressMap] = useState<Record<string, number>>({});
+  const isAdmin = hasRole("admin") || hasRole("super_admin");
 
   if (loading || isLoading) return <div className="flex min-h-[60vh] items-center justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
-  if (!user || !hasRole("instructor")) return <Navigate to="/dashboard" />;
-  if (!course || course.instructor_id !== user.id) return <Navigate to="/instructor/dashboard" />;
+  if (!user || (!hasRole("instructor") && !isAdmin)) return <Navigate to="/dashboard" />;
+  if (!course || (course.instructor_id !== user.id && !isAdmin)) return <Navigate to="/instructor/dashboard" />;
 
   const togglePublish = async () => {
     const { error } = await supabase.from("courses").update({ is_published: !course.is_published }).eq("id", course.id);
@@ -97,6 +101,23 @@ export default function EditCourse() {
     await supabase.from("lectures").update({ title }).eq("id", lectureId);
   };
 
+  const handleVideoUpload = async (lectureId: string, courseId: string, file: File) => {
+    try {
+      setProgressMap((m) => ({ ...m, [lectureId]: 0 }));
+      const path = await uploadLectureVideo(file, `${courseId}/${lectureId}`, (pct) => {
+        setProgressMap((m) => ({ ...m, [lectureId]: pct }));
+      });
+      const { error } = await supabase.from("lectures").update({ video_url: path }).eq("id", lectureId);
+      if (error) throw error;
+      toast.success("Video uploaded");
+      refetchSections();
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+    } finally {
+      setTimeout(() => setProgressMap((m) => { const n = { ...m }; delete n[lectureId]; return n; }), 1500);
+    }
+  };
+
   return (
     <div className="container py-8 max-w-3xl space-y-8">
       <div className="flex items-center justify-between">
@@ -132,19 +153,51 @@ export default function EditCourse() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-2 pt-2">
-                    {section.lectures?.sort((a: any, b: any) => a.position - b.position).map((lecture: any) => (
-                      <div key={lecture.id} className="flex items-center gap-2 py-1">
-                        <GripVertical className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                          defaultValue={lecture.title}
-                          onBlur={(e) => updateLectureTitle(lecture.id, e.target.value)}
-                          className="h-8 text-sm"
-                        />
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteLecture(lecture.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                    {section.lectures?.sort((a: any, b: any) => a.position - b.position).map((lecture: any) => {
+                      const pct = progressMap[lecture.id];
+                      return (
+                        <div key={lecture.id} className="space-y-2 py-2 border-b last:border-0">
+                          <div className="flex items-center gap-2">
+                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            <Input
+                              defaultValue={lecture.title}
+                              onBlur={(e) => updateLectureTitle(lecture.id, e.target.value)}
+                              className="h-8 text-sm"
+                            />
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept="video/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (f) handleVideoUpload(lecture.id, course.id, f);
+                                  e.target.value = "";
+                                }}
+                              />
+                              <Button asChild variant="outline" size="sm">
+                                <span>
+                                  {lecture.video_url ? <Check className="h-4 w-4 mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
+                                  {lecture.video_url ? "Replace" : "Video"}
+                                </span>
+                              </Button>
+                            </label>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteLecture(lecture.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          {typeof pct === "number" && (
+                            <div className="pl-6 space-y-1">
+                              <Progress value={pct} />
+                              <p className="text-xs text-muted-foreground">Uploading… {pct}%</p>
+                            </div>
+                          )}
+                          {lecture.video_url && (
+                            <p className="pl-6 text-xs text-muted-foreground truncate">📹 {lecture.video_url}</p>
+                          )}
+                        </div>
+                      );
+                    })}
                     <div className="flex gap-2 pt-2">
                       <Button variant="outline" size="sm" onClick={() => addLecture(section.id, section.lectures?.length || 0)}>
                         <Plus className="mr-1 h-3 w-3" /> Add Lecture

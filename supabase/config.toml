@@ -1,10 +1,4 @@
 project_id = "ebxgztearitunxjckzgq"
 
-[functions.seed-demo-accounts]
-verify_jwt = false
-
-[functions.seed-demo-instructor]
-verify_jwt = false
-
-[functions.impersonate-demo-user]
+[functions.admin-user-management]
 verify_jwt = false

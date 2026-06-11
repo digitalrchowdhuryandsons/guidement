@@ -20,6 +20,10 @@ import { toast } from "sonner";
 import PurchaseAttemptsPanel from "@/components/admin/PurchaseAttemptsPanel";
 import PaymentRetriesPanel from "@/components/admin/PaymentRetriesPanel";
 import ImpersonationPanel from "@/components/admin/ImpersonationPanel";
+import CoursePlayerHubAdminPanel from "@/components/admin/CoursePlayerHubAdminPanel";
+import CoursesManagement from "@/components/admin/CoursesManagement";
+import UsersManagement from "@/components/admin/UsersManagement";
+import SiteContentEditor from "@/components/admin/SiteContentEditor";
 
 export default function AdminDashboard() {
   const { user, loading, hasRole } = useAuth();
@@ -152,6 +156,18 @@ export default function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="attempts">Purchase Attempts</TabsTrigger>
           <TabsTrigger value="retries">Payment Retries</TabsTrigger>
+             <TabsTrigger value="all-courses">All Courses</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="content">Site Content</TabsTrigger>
+            <TabsContent value="all-courses">
+          <CoursesManagement />
+        </TabsContent>
+        <TabsContent value="users">
+          <UsersManagement />
+        </TabsContent>
+        <TabsContent value="content">
+          <SiteContentEditor />
+        </TabsContent>
           <TabsTrigger value="impersonate">Impersonate</TabsTrigger>
         </TabsList>
 
@@ -290,6 +306,10 @@ export default function AdminDashboard() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+          <TabsContent value="hub">
+          <CoursePlayerHubAdminPanel />
         </TabsContent>
 
         <TabsContent value="attempts">

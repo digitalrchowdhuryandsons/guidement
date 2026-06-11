@@ -127,6 +127,210 @@ export type Database = {
         }
         Relationships: []
       }
+      course_workshops: {
+        Row: {
+          course_id: string
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          meeting_url: string | null
+          position: number
+          recording_url: string | null
+          starts_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          meeting_url?: string | null
+          position?: number
+          recording_url?: string | null
+          starts_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          meeting_url?: string | null
+          position?: number
+          recording_url?: string | null
+          starts_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      course_certifications: {
+        Row: {
+          certificate_url: string | null
+          course_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          passing_score: number
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          certificate_url?: string | null
+          course_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          passing_score?: number
+          position?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          certificate_url?: string | null
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          passing_score?: number
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      course_events: {
+        Row: {
+          course_id: string
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          event_url: string | null
+          id: string
+          is_active: boolean
+          location: string | null
+          position: number
+          starts_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          event_url?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          position?: number
+          starts_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          event_url?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          position?: number
+          starts_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      course_communities: {
+        Row: {
+          community_url: string | null
+          course_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          platform: string | null
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          community_url?: string | null
+          course_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          platform?: string | null
+          position?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          community_url?: string | null
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          platform?: string | null
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      course_player_notes: {
+        Row: {
+          content: string
+          course_id: string
+          created_at: string
+          id: string
+          lecture_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          course_id: string
+          created_at?: string
+          id?: string
+          lecture_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          lecture_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           category_id: string | null
@@ -684,6 +888,30 @@ export type Database = {
           },
         ]
       }
+       site_content: {
+        Row: {
+          data: Json
+          enabled: boolean
+          key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          data?: Json
+          enabled?: boolean
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          data?: Json
+          enabled?: boolean
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -736,6 +964,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+       admin_list_users: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          banned_until: string
+          created_at: string
+          email: string
+          full_name: string
+          roles: Database["public"]["Enums"]["app_role"][]
+          user_id: string
+        }[]
+      }
       get_retry_user_details: {
         Args: { _user_ids: string[] }
         Returns: {
