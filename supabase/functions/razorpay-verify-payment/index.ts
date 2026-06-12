@@ -157,6 +157,11 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .eq("course_id", course_id);
 
+        // Record coupon redemption (atomic, re-validates the coupon)
+    if (coupon_id) {
+      await admin.rpc("increment_coupon_use", { _coupon_id: coupon_id });
+    }
+
     return json({ success: true, purchase_id: inserted.id });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
