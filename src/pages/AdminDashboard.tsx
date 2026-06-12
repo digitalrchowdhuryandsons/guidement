@@ -19,11 +19,12 @@ import {
 import { toast } from "sonner";
 import PurchaseAttemptsPanel from "@/components/admin/PurchaseAttemptsPanel";
 import PaymentRetriesPanel from "@/components/admin/PaymentRetriesPanel";
-import ImpersonationPanel from "@/components/admin/ImpersonationPanel";
 import CoursePlayerHubAdminPanel from "@/components/admin/CoursePlayerHubAdminPanel";
 import CoursesManagement from "@/components/admin/CoursesManagement";
 import UsersManagement from "@/components/admin/UsersManagement";
 import SiteContentEditor from "@/components/admin/SiteContentEditor";
+import CouponsManagement from "@/components/admin/CouponsManagement";
+import CouponRedemptions from "@/components/admin/CouponRedemptions";
 
 export default function AdminDashboard() {
   const { user, loading, hasRole } = useAuth();
@@ -83,14 +84,12 @@ export default function AdminDashboard() {
 
   const handleApplication = useMutation({
     mutationFn: async ({ appId, userId, action }: { appId: string; userId: string; action: "approved" | "rejected" }) => {
-      // Update application status
       const { error: appError } = await supabase
         .from("instructor_applications")
         .update({ status: action, updated_at: new Date().toISOString() })
         .eq("id", appId);
       if (appError) throw appError;
 
-      // If approved, add instructor role
       if (action === "approved") {
         const { error: roleError } = await supabase
           .from("user_roles")
@@ -156,19 +155,12 @@ export default function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="attempts">Purchase Attempts</TabsTrigger>
           <TabsTrigger value="retries">Payment Retries</TabsTrigger>
-             <TabsTrigger value="all-courses">All Courses</TabsTrigger>
+          <TabsTrigger value="all-courses">All Courses</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="content">Site Content</TabsTrigger>
-            <TabsContent value="all-courses">
-          <CoursesManagement />
-        </TabsContent>
-        <TabsContent value="users">
-          <UsersManagement />
-        </TabsContent>
-        <TabsContent value="content">
-          <SiteContentEditor />
-        </TabsContent>
-          <TabsTrigger value="impersonate">Impersonate</TabsTrigger>
+          <TabsTrigger value="coupons">Coupons</TabsTrigger>
+          <TabsTrigger value="redemptions">Redemptions</TabsTrigger>
+          <TabsTrigger value="hub">Course Hub</TabsTrigger>
         </TabsList>
 
         {/* Course Approvals */}
@@ -256,12 +248,11 @@ export default function AdminDashboard() {
                       </div>
                       {app.website && (
                         <div className="text-sm">
-                          <p className="text-muted-foreground font-medium">Website</p>
-                          <a
+                          <a className="text-muted-foreground font-medium"
+                          
                             href={app.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-primary hover:underline"
                           >
                             {app.website}
                           </a>
@@ -308,10 +299,6 @@ export default function AdminDashboard() {
           </Card>
         </TabsContent>
 
-          <TabsContent value="hub">
-          <CoursePlayerHubAdminPanel />
-        </TabsContent>
-
         <TabsContent value="attempts">
           <PurchaseAttemptsPanel />
         </TabsContent>
@@ -320,8 +307,26 @@ export default function AdminDashboard() {
           <PaymentRetriesPanel />
         </TabsContent>
 
-        <TabsContent value="impersonate">
-          <ImpersonationPanel />
+        <TabsContent value="all-courses">
+          <CoursesManagement />
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UsersManagement />
+        </TabsContent>
+
+        <TabsContent value="content">
+          <SiteContentEditor />
+        </TabsContent>
+              <TabsContent value="coupons">
+          <CouponsManagement />
+        </TabsContent>
+        <TabsContent value="redemptions">
+          <CouponRedemptions />
+        </TabsContent>
+
+        <TabsContent value="hub">
+          <CoursePlayerHubAdminPanel />
         </TabsContent>
       </Tabs>
     </div>

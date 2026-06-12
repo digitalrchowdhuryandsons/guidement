@@ -35,6 +35,7 @@ export default function CourseDetail() {
   const queryClient = useQueryClient();
   const [buyDialogOpen, setBuyDialogOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [couponCode, setCouponCode] = useState("");
 
   const { data: course, isLoading } = useQuery({
     queryKey: ["course", slug],
@@ -139,13 +140,16 @@ export default function CourseDetail() {
 
       const { data: orderData, error: orderErr } = await supabase.functions.invoke(
         "razorpay-create-order",
-        { body: { course_id: course.id, currency: "INR" } },
+      { body: { course_id: course.id, currency: "INR", coupon_code: couponCode.trim() || undefined } },
       );
       if (orderErr || !orderData?.order_id) {
         throw new Error(orderErr?.message || orderData?.error || "Could not create order");
       }
       if (orderData.resumed) {
         toast.info("Resuming your previous checkout…");
+      }  
+     else if (orderData.discount > 0) {
+        toast.success(`Coupon applied — you saved $${Number(orderData.discount).toFixed(2)}`);
       }
 
       await new Promise<void>((resolve, reject) => {
@@ -171,7 +175,8 @@ export default function CourseDetail() {
                     razorpay_payment_id: resp.razorpay_payment_id,
                     razorpay_signature: resp.razorpay_signature,
                     course_id: course.id,
-                    amount: Number(course.price),
+                    amount: Number(orderData.price),
+                    coupon_id: orderData.coupon_id ?? null,
                   },
                 },
               );
@@ -443,10 +448,22 @@ export default function CourseDetail() {
                 : "You need to sign in before you can purchase and unlock this course."}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-2 space-y-2">
+        <div className="py-2 space-y-3">
             <p className="font-display text-2xl font-bold">
               {course.price === 0 ? "Free" : `$${Number(course.price).toFixed(2)}`}
             </p>
+                      {user && course.price > 0 && (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Have a coupon?</label>
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="Enter coupon code"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm uppercase placeholder:text-muted-foreground placeholder:normal-case focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+            )}
             {pendingOrder && (
               <p className="text-xs text-muted-foreground">
                 We found an unfinished checkout for this course. Continue where you left off — no duplicate charges.

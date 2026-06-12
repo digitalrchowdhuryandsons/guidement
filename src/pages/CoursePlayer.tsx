@@ -18,13 +18,12 @@ import {
   PlayCircle,
   Menu,
   X,
+  Send,
+  Sparkles,
   Lock,
   ChevronDown,
   ChevronUp,
   Award,
-  Home,
-  Bookmark,
-  Video,
   Briefcase,
   GraduationCap,
   CalendarDays,
@@ -180,6 +179,8 @@ export default function CoursePlayer() {
   const [noteTitle, setNoteTitle] = useState("");
   const [noteContent, setNoteContent] = useState("");
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [aiChatOpen, setAiChatOpen] = useState(false);
+  const [aiChatPrompt, setAiChatPrompt] = useState("");
 
   // Fetch course by slug
   const { data: course, isLoading: courseLoading } = useQuery({
@@ -1016,7 +1017,6 @@ export default function CoursePlayer() {
     : null;
 
   const canAccessResources = hasAccess;
-  // FIX 2: instructorName was rendered twice in the card — unified to one source
   const instructorName =
     (course as { profiles?: { full_name?: string | null } | null }).profiles
       ?.full_name || "Instructor";
@@ -1148,9 +1148,7 @@ export default function CoursePlayer() {
     </div>
   );
 
-  // FIX 3: renderHubPanel had a broken structure — the "courses" branch returned
-  // early into a dangling block, and all subsequent tab branches were outside the
-  // function body entirely. Rewrote as a single clean if/else-if chain.
+
   const renderHubPanel = () => {
     if (activeHubTab === "courses") {
       return (
@@ -1448,7 +1446,13 @@ export default function CoursePlayer() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#eeeff5] p-4">
-      <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <div
+        className={`mx-auto grid max-w-[1400px] grid-cols-1 gap-4 transition-[grid-template-columns] duration-300 ${
+          aiChatOpen
+            ? "lg:grid-cols-[220px_320px_minmax(0,1fr)]"
+            : "lg:grid-cols-[220px_minmax(0,1fr)]"
+        }`}
+      >
         {/* ── Left nav sidebar ── */}
         <aside className="rounded-2xl border bg-[#f7f8fc] p-4 shadow-sm">
           <p className="mb-6 font-display text-xl font-bold">
@@ -1460,7 +1464,11 @@ export default function CoursePlayer() {
             </Link>
           </p>
           <div className="space-y-1 text-sm">
+              <Link
+              to="/"
+            >
             <p className="rounded-lg px-3 py-2">Home</p>
+            </Link>
             <p className="rounded-lg px-3 py-2">Bookmark</p>
             <p className="rounded-lg bg-violet-600 px-3 py-2 font-semibold text-white">
               Courses
@@ -1480,7 +1488,102 @@ export default function CoursePlayer() {
             </p>
           </div>
         </aside>
+    {/* ── AI chat assistant sidebar ── */}
+        <aside
+          className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300 ${
+            aiChatOpen
+              ? "block max-h-[720px] opacity-100 lg:w-80"
+              : "hidden max-h-0 border-transparent opacity-0 lg:w-0"
+          }`}
+          aria-hidden={!aiChatOpen}
+        >
+          <div className="flex h-full min-h-[520px] w-80 flex-col">
+            <div className="bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-4 text-white">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-lg font-bold">
+                      AI Course Assistant
+                    </h2>
+                    <p className="text-xs text-white/80">
+                      Ask about this lesson or your progress.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full text-white hover:bg-white/20 hover:text-white"
+                  aria-label="Collapse AI chat assistant sidebar"
+                  onClick={() => setAiChatOpen(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
 
+            <div className="flex flex-1 flex-col gap-4 p-5">
+              <div className="rounded-2xl bg-slate-100 p-4 text-sm text-slate-700">
+                <p className="mb-2 font-semibold text-slate-900">
+                  Hi {firstName}, how can I help?
+                </p>
+                <p>
+                  Try asking for a summary of the current lecture, a simpler
+                  explanation, or what to review next.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Suggested prompts
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "Summarize this lesson",
+                    "Explain the key idea",
+                    "What should I revise?",
+                  ].map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      className="rounded-full border bg-white px-3 py-1.5 text-xs text-slate-700 transition-colors hover:border-primary hover:text-primary"
+                      onClick={() => setAiChatPrompt(prompt)}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <form
+                className="mt-auto flex items-center gap-2 rounded-2xl border bg-white p-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  toast.info("AI chat is opening soon. Your question is ready.");
+                }}
+              >
+                <input
+                  className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
+                  placeholder="Ask the AI assistant..."
+                  value={aiChatPrompt}
+                  onChange={(event) => setAiChatPrompt(event.target.value)}
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  aria-label="Send AI chat message"
+                  disabled={!aiChatPrompt.trim()}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </div>
+          </div>
+        </aside>
         {/* ── Main content ── */}
         <div className="rounded-2xl border bg-white p-4 shadow-sm">
           {/* Top bar */}
@@ -1504,7 +1607,16 @@ export default function CoursePlayer() {
                 onChange={(event) => setSidebarSearch(event.target.value)}
               />
             </label>
-            <MessageCircle className="h-4 w-4" />
+              <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full text-slate-700 hover:bg-white hover:text-primary"
+              aria-label="Toggle AI chat assistant sidebar"
+              aria-expanded={aiChatOpen}
+              onClick={() => setAiChatOpen((open) => !open)}
+            >
+              <MessageCircle className="h-4 w-4" />
+            </Button>
             <Bell className="h-4 w-4" />
             <Link
               to={`/course/${slug}`}
@@ -2007,6 +2119,7 @@ export default function CoursePlayer() {
           </div>
         </div>
       </div>
+
 
       {/* ── Buy/unlock dialog ── */}
       <Dialog open={buyDialogOpen} onOpenChange={setBuyDialogOpen}>

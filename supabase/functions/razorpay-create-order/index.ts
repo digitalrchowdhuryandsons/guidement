@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     const user = userRes.user;
 
     const body = await req.json().catch(() => null);
-    const { course_id, currency } = body ?? {};
+    const { course_id, currency, coupon_code } = body ?? {};
     if (typeof course_id !== "string") {
       return json({ error: "Invalid course_id" }, 400);
     }
@@ -73,7 +73,26 @@ Deno.serve(async (req) => {
       return json({ error: "Course already purchased", already_purchased: true }, 409);
     }
 
-    const amountMinor = Math.round(price * 100);
+   // Validate coupon (server-side) and compute the final amount
+    let couponId: string | null = null;
+    let finalPrice = price;
+    let discount = 0;
+    if (typeof coupon_code === "string" && coupon_code.trim().length > 0) {
+      const { data: cv, error: cvErr } = await admin.rpc("validate_coupon", {
+        _code: coupon_code.trim(),
+        _course_id: course.id,
+        _price: price,
+      });
+      if (cvErr) return json({ error: "Coupon check failed" }, 500);
+      const row = Array.isArray(cv) ? cv[0] : cv;
+      if (!row || row.reason !== "ok") {
+        return json({ error: `Invalid coupon (${row?.reason ?? "unknown"})` }, 400);
+      }
+      couponId = row.coupon_id;
+      finalPrice = Number(row.discounted_price);
+      discount = Number(row.discount);
+    }
+    const amountMinor = Math.max(100, Math.round(finalPrice * 100));
 
     // Reuse an in-progress order if one exists and hasn't expired.
     const { data: pending } = await admin
@@ -151,7 +170,10 @@ Deno.serve(async (req) => {
       currency: cur,
       key_id: keyId,
       course_title: course.title,
-      price,
+      price: finalPrice,
+      original_price: price,
+      discount,
+      coupon_id: couponId,
       resumed: false,
     });
   } catch (e) {
