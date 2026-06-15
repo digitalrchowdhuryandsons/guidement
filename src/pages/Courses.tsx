@@ -26,29 +26,39 @@ export default function Courses() {
     },
   });
 
-  const { data: courses, isLoading } = useQuery({
-    queryKey: ["courses", q, categorySlug, priceFilter, levelFilter, sortBy],
-    queryFn: async () => {
-      let query = supabase
-        .from("courses")
-        .select("*, profiles!courses_instructor_profile_fkey(full_name), categories(name, slug)")
-        .eq("is_published", true)
-        .eq("is_approved", true);
+ const { data: courses, isLoading } = useQuery({
+  queryKey: ["courses", q, categorySlug, priceFilter, levelFilter, sortBy],
+  queryFn: async () => {
+    let query = supabase
+      .from("courses")
+      .select("*, profiles!courses_instructor_profile_fkey(full_name), categories(name, slug)")
+      .eq("is_published", true)
+      .eq("is_approved", true);
 
-      if (q) query = query.ilike("title", `%${q}%`);
-      if (categorySlug) query = query.eq("categories.slug", categorySlug);
-      if (priceFilter === "free") query = query.eq("price", 0);
-      if (priceFilter === "paid") query = query.gt("price", 0);
-      if (levelFilter !== "all") query = query.eq("level", levelFilter);
+    if (q) query = query.ilike("title", `%${q}%`);
 
-      if (sortBy === "newest") query = query.order("created_at", { ascending: false });
-      else if (sortBy === "price-low") query = query.order("price", { ascending: true });
-      else if (sortBy === "price-high") query = query.order("price", { ascending: false });
+    // Fix: resolve slug → id first, then filter on category_id
+    if (categorySlug) {
+      const { data: cat } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("slug", categorySlug)
+        .single();
+      if (cat) query = query.eq("category_id", cat.id);
+    }
 
-      const { data } = await query;
-      return data || [];
-    },
-  });
+    if (priceFilter === "free") query = query.eq("price", 0);
+    if (priceFilter === "paid") query = query.gt("price", 0);
+    if (levelFilter !== "all") query = query.eq("level", levelFilter);
+
+    if (sortBy === "newest") query = query.order("created_at", { ascending: false });
+    else if (sortBy === "price-low") query = query.order("price", { ascending: true });
+    else if (sortBy === "price-high") query = query.order("price", { ascending: false });
+
+    const { data } = await query;
+    return data || [];
+  },
+});
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

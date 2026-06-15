@@ -202,7 +202,7 @@ export default function Landing() {
                 Share your expertise with millions of students worldwide. Create courses and earn revenue.
               </p>
               <Link to="/become-instructor">
-                <Button size="lg" variant="secondary" className="rounded-full px-8">
+                <Button size="lg" variant="secondary" className="rounded-full px-8 mt-10">
                   Become an Instructor <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -217,7 +217,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold mb-4">
-                     <img src="/logo.png" alt="" className="w-30 h-20" />
+                     <img src="/logo1.png" alt="" className="w-30 h-20" />
               </Link>
               <p className="text-sm text-muted-foreground">
                 The best place to learn new skills and advance your career.
