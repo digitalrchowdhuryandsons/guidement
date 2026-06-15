@@ -318,9 +318,11 @@ export default function AdminDashboard() {
         <TabsContent value="content">
           <SiteContentEditor />
         </TabsContent>
-              <TabsContent value="coupons">
+
+        <TabsContent value="coupons">
           <CouponsManagement />
         </TabsContent>
+
         <TabsContent value="redemptions">
           <CouponRedemptions />
         </TabsContent>
@@ -328,6 +330,7 @@ export default function AdminDashboard() {
         <TabsContent value="hub">
           <CoursePlayerHubAdminPanel />
         </TabsContent>
+        
       </Tabs>
     </div>
   );

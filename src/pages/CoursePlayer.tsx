@@ -181,6 +181,8 @@ export default function CoursePlayer() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [aiChatPrompt, setAiChatPrompt] = useState("");
+  const [lessonDrawerOpen, setLessonDrawerOpen] = useState(false);
+  const [notesCollapsed, setNotesCollapsed] = useState(false);
 
   // Fetch course by slug
   const { data: course, isLoading: courseLoading } = useQuery({
@@ -1126,11 +1128,13 @@ export default function CoursePlayer() {
     </div>
   );
 
+
   const emptyHubState = (label: string) => (
     <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
       No {label.toLowerCase()} have been added for this course yet.
     </div>
   );
+
 
   const lockedHubState = (label: string) => (
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
@@ -1229,7 +1233,6 @@ export default function CoursePlayer() {
         </div>
       );
     }
-
     if (activeHubTab === "certifications") {
       if (!hasAccess) return lockedHubState("Certifications");
       return (
@@ -1444,325 +1447,464 @@ export default function CoursePlayer() {
     );
   };
 
-  return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#eeeff5] p-4">
-        <div
-        className={`mx-auto grid max-w-[1400px] grid-cols-1 gap-4 transition-[grid-template-columns] duration-300 ${
-          aiChatOpen
-            ? "lg:grid-cols-[220px_320px_minmax(0,1fr)]"
-            : "lg:grid-cols-[220px_minmax(0,1fr)]"
-        }`}
-      >
-        {/* ── Left nav sidebar ── */}
-        <aside className="rounded-2xl border bg-[#f7f8fc] p-4 shadow-sm">
-          <p className="mb-6 font-display text-xl font-bold">
-            <Link
-              to="/"
-              className="flex items-center gap-2 font-display text-xl font-bold"
-            >
-              <img src="/logo.png" alt="" className="w-30 h-20" />
-            </Link>
-          </p>
-          <div className="space-y-1 text-sm">
-              <Link
-              to="/"
-            >
-            <p className="rounded-lg px-3 py-2">Home</p>
-            </Link>
-            <p className="rounded-lg px-3 py-2">Bookmark</p>
-            <p className="rounded-lg bg-violet-600 px-3 py-2 font-semibold text-white">
-              Courses
-            </p>
-            <p className="rounded-lg px-3 py-2">Workshop</p>
-            <p className="rounded-lg px-3 py-2">Resources</p>
+return (
+ 
+  <div className="min-h-[calc(100vh-4rem)] bg-[#eeeff5] dark:bg-[#0f1117] p-2 sm:p-4 transition-colors duration-300">
+
+    {/* ── Top-level grid: stacks vertically on mobile, 2-col on md, 4-col on xl ── */}
+    <div className="mx-auto max-w-[1400px]">
+
+      {/* === MOBILE AI CHAT DRAWER (fixed bottom sheet, only on < xl) === */}
+      {aiChatOpen && (
+        <div className="xl:hidden fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t dark:border-white/10 bg-white dark:bg-[#1a1d27] shadow-2xl max-h-[80dvh] flex flex-col">
+          {/* Drag handle */}
+          <div className="flex justify-center pt-3 pb-1 shrink-0">
+            <div className="h-1 w-10 rounded-full bg-border dark:bg-white/20" />
           </div>
-          <div className="mt-16 space-y-1 text-sm">
-            <p className="flex items-center gap-2 rounded-lg px-3 py-2">
-              <Settings className="h-4 w-4" /> Settings
-            </p>
-            <p className="flex items-center gap-2 rounded-lg px-3 py-2">
-              <HelpCircle className="h-4 w-4" /> Help Center
-            </p>
-            <p className="flex items-center gap-2 rounded-lg px-3 py-2">
-              <User className="h-4 w-4" /> My Account
-            </p>
-          </div>
-        </aside>
-    {/* ── AI chat assistant sidebar ── */}
-        <aside
-          className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300 ${
-            aiChatOpen
-              ? "block max-h-[720px] opacity-100 lg:w-80"
-              : "hidden max-h-0 border-transparent opacity-0 lg:w-0"
-          }`}
-          aria-hidden={!aiChatOpen}
-        >
-          <div className="flex h-full min-h-[520px] w-80 flex-col">
-            <div className="bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-4 text-white">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                    <Sparkles className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="font-display text-lg font-bold">
-                      AI Course Assistant
-                    </h2>
-                    <p className="text-xs text-white/80">
-                      Ask about this lesson or your progress.
-                    </p>
-                  </div>
+          <div className="bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-3 text-white shrink-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 shrink-0">
+                  <Sparkles className="h-4 w-4" />
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-full text-white hover:bg-white/20 hover:text-white"
-                  aria-label="Collapse AI chat assistant sidebar"
-                  onClick={() => setAiChatOpen(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex flex-1 flex-col gap-4 p-5">
-              <div className="rounded-2xl bg-slate-100 p-4 text-sm text-slate-700">
-                <p className="mb-2 font-semibold text-slate-900">
-                  Hi {firstName}, how can I help?
-                </p>
-                <p>
-                  Try asking for a summary of the current lecture, a simpler
-                  explanation, or what to review next.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Suggested prompts
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    "Summarize this lesson",
-                    "Explain the key idea",
-                    "What should I revise?",
-                  ].map((prompt) => (
-                    <button
-                      key={prompt}
-                      type="button"
-                      className="rounded-full border bg-white px-3 py-1.5 text-xs text-slate-700 transition-colors hover:border-primary hover:text-primary"
-                      onClick={() => setAiChatPrompt(prompt)}
-                    >
-                      {prompt}
-                    </button>
-                  ))}
+                <div>
+                  <h2 className="font-display text-base font-bold">AI Course Assistant</h2>
+                  <p className="text-xs text-white/80">Ask about this lesson or your progress.</p>
                 </div>
               </div>
-
-              <form
-                className="mt-auto flex items-center gap-2 rounded-2xl border bg-white p-2"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  toast.info("AI chat is opening soon. Your question is ready.");
-                }}
+              <Button
+                variant="ghost" size="icon"
+                className="h-8 w-8 rounded-full text-white hover:bg-white/20 hover:text-white shrink-0"
+                aria-label="Close AI assistant"
+                onClick={() => setAiChatOpen(false)}
               >
-                <input
-                  className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
-                  placeholder="Ask the AI assistant..."
-                  value={aiChatPrompt}
-                  onChange={(event) => setAiChatPrompt(event.target.value)}
-                />
-                <Button
-                  type="submit"
-                  size="icon"
-                  className="h-9 w-9 rounded-full"
-                  aria-label="Send AI chat message"
-                  disabled={!aiChatPrompt.trim()}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </form>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-        </aside>
-        {/* ── Main content ── */}
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
-          {/* Top bar */}
-          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl bg-slate-100 p-3">
-            <div>
-              <p className="text-sm font-semibold">
-                👋 Welcome back, {firstName}!
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Boost your skill to shine in your life.
-              </p>
+          <div className="flex flex-1 flex-col gap-3 p-4 overflow-y-auto">
+            <div className="rounded-2xl bg-slate-100 dark:bg-white/5 p-3 text-sm text-slate-700 dark:text-white/80">
+              <p className="mb-1 font-semibold text-slate-900 dark:text-white">Hi {firstName}, how can I help?</p>
+              <p className="text-xs">Try asking for a summary, a simpler explanation, or what to review next.</p>
             </div>
-            {/* FIX 4: Removed the duplicate static "Search Courses" box;
-                kept only the functional lesson-search input */}
-            <label className="ml-auto flex items-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm text-muted-foreground">
-              <Search className="h-4 w-4" />
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground dark:text-white/40">Suggested</p>
+              <div className="flex flex-wrap gap-2">
+                {["Summarize this lesson", "Explain the key idea", "What should I revise?"].map((prompt) => (
+                  <button
+                    key={prompt} type="button"
+                    className="rounded-full border border-border dark:border-white/20 bg-white dark:bg-white/5 px-3 py-1.5 text-xs text-slate-700 dark:text-white/70 transition-colors hover:border-primary hover:text-primary active:scale-95"
+                    onClick={() => setAiChatPrompt(prompt)}
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="shrink-0 p-3 border-t border-border dark:border-white/10">
+            <div className="flex items-center gap-2 rounded-2xl border border-border dark:border-white/10 bg-white dark:bg-white/5 p-2">
               <input
-                className="w-40 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
+                className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground dark:text-white dark:placeholder:text-white/30"
+                placeholder="Ask the AI assistant..."
+                value={aiChatPrompt}
+                onChange={(e) => setAiChatPrompt(e.target.value)}
+              />
+              <Button
+                size="icon" className="h-9 w-9 rounded-full shrink-0"
+                disabled={!aiChatPrompt.trim()}
+                onClick={() => toast.info("AI chat is opening soon. Your question is ready.")}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Backdrop for mobile AI drawer */}
+      {aiChatOpen && (
+        <div
+          className="xl:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+          onClick={() => setAiChatOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* === DESKTOP LAYOUT: flex row at xl === */}
+      <div className="flex flex-col xl:flex-row gap-3 sm:gap-4 items-start">
+
+        {/* ── LEFT: Notes panel — hidden on mobile/tablet, sticky on desktop ── */}
+        <aside className="hidden xl:flex xl:w-[220px] xl:shrink-0 xl:sticky xl:top-4 w-full rounded-2xl border border-border bg-[#f7f8fc] dark:bg-[#1a1d27] dark:border-white/10 shadow-sm flex-col overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setNotesCollapsed((v) => !v)}
+            className="flex w-full items-center justify-between gap-2 px-4 py-4 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <StickyNote className="h-4 w-4 text-violet-600 dark:text-violet-400 shrink-0" />
+              <span className="font-display text-sm font-bold text-foreground dark:text-white">My Notes</span>
+            </div>
+            {notesCollapsed
+              ? <ChevronDown className="h-4 w-4 text-muted-foreground dark:text-white/50" />
+              : <ChevronUp className="h-4 w-4 text-muted-foreground dark:text-white/50" />
+            }
+          </button>
+
+          {!notesCollapsed && (
+            <div className="flex flex-col gap-3 px-4 pb-4">
+              <div>
+                <p className="text-xs text-muted-foreground dark:text-white/50 mb-1">
+                  {activeLecture?.title || "Select a lesson"}
+                </p>
+                <Badge variant="secondary">{activeLectureNotes.length} notes</Badge>
+              </div>
+              <Input
+                placeholder="Note title"
+                value={noteTitle}
+                onChange={(e) => setNoteTitle(e.target.value)}
+                className="text-sm dark:bg-[#252836] dark:border-white/10 dark:text-white dark:placeholder:text-white/30"
+              />
+              <Textarea
+                className="min-h-24 text-sm resize-none dark:bg-[#252836] dark:border-white/10 dark:text-white dark:placeholder:text-white/30"
+                placeholder="Key takeaways, timestamps, questions..."
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+              />
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  size="sm"
+                  onClick={() => saveNoteMutation.mutate()}
+                  disabled={saveNoteMutation.isPending || (!noteTitle.trim() && !noteContent.trim())}
+                  className="flex-1"
+                >
+                  {editingNoteId ? "Update" : "Save note"}
+                </Button>
+                {editingNoteId && (
+                  <Button size="sm" variant="outline" onClick={cancelEditingNote}
+                    className="dark:border-white/10 dark:text-white dark:hover:bg-white/10">
+                    Cancel
+                  </Button>
+                )}
+              </div>
+              <ScrollArea className="max-h-64">
+                <div className="space-y-2 pr-1">
+                  {activeLectureNotes.length > 0 ? (
+                    activeLectureNotes.map((note) => (
+                      <div key={note.id} className="rounded-lg border border-border dark:border-white/10 bg-white dark:bg-[#252836] p-2.5 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-semibold truncate dark:text-white">{note.title}</p>
+                            <p className="text-muted-foreground dark:text-white/40">
+                              {new Date(note.updated_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            <Button size="sm" variant="ghost" className="h-6 w-6 p-0 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/10" onClick={() => startEditingNote(note)}>
+                              <FileText className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive dark:text-red-400 dark:hover:bg-red-400/10" onClick={() => deleteNoteMutation.mutate(note.id)} disabled={deleteNoteMutation.isPending}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        {note.content && (
+                          <p className="mt-1.5 text-muted-foreground dark:text-white/50 line-clamp-3 whitespace-pre-wrap">{note.content}</p>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-lg border border-dashed border-border dark:border-white/20 p-3 text-center text-xs text-muted-foreground dark:text-white/40">
+                      No notes for this lesson yet.
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+        </aside>
+
+        {/* ── AI CHAT sidebar — desktop only (xl+), full panel ── */}
+        {aiChatOpen && (
+          <aside className="hidden xl:flex xl:w-[300px] xl:shrink-0 xl:sticky xl:top-4 overflow-hidden rounded-2xl border dark:border-white/10 bg-white dark:bg-[#1a1d27] shadow-sm flex-col">
+            <div className="flex flex-col min-h-[520px]">
+              <div className="bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-4 text-white">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 shrink-0">
+                      <Sparkles className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h2 className="font-display text-lg font-bold">AI Course Assistant</h2>
+                      <p className="text-xs text-white/80">Ask about this lesson or your progress.</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost" size="icon"
+                    className="h-8 w-8 rounded-full text-white hover:bg-white/20 hover:text-white shrink-0"
+                    aria-label="Close AI assistant"
+                    onClick={() => setAiChatOpen(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-1 flex-col gap-4 p-5">
+                <div className="rounded-2xl bg-slate-100 dark:bg-white/5 p-4 text-sm text-slate-700 dark:text-white/80">
+                  <p className="mb-2 font-semibold text-slate-900 dark:text-white">Hi {firstName}, how can I help?</p>
+                  <p>Try asking for a summary of the current lecture, a simpler explanation, or what to review next.</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground dark:text-white/40">Suggested prompts</p>
+                  <div className="flex flex-wrap gap-2">
+                    {["Summarize this lesson", "Explain the key idea", "What should I revise?"].map((prompt) => (
+                      <button
+                        key={prompt} type="button"
+                        className="rounded-full border border-border dark:border-white/20 bg-white dark:bg-white/5 px-3 py-1.5 text-xs text-slate-700 dark:text-white/70 transition-colors hover:border-primary hover:text-primary"
+                        onClick={() => setAiChatPrompt(prompt)}
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-auto flex items-center gap-2 rounded-2xl border border-border dark:border-white/10 bg-white dark:bg-white/5 p-2">
+                  <input
+                    className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground dark:text-white dark:placeholder:text-white/30"
+                    placeholder="Ask the AI assistant..."
+                    value={aiChatPrompt}
+                    onChange={(e) => setAiChatPrompt(e.target.value)}
+                  />
+                  <Button
+                    size="icon" className="h-9 w-9 rounded-full shrink-0"
+                    disabled={!aiChatPrompt.trim()}
+                    onClick={() => toast.info("AI chat is opening soon. Your question is ready.")}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </aside>
+        )}
+
+        {/* ── MAIN CONTENT ── */}
+        <div className="w-full min-w-0 rounded-2xl border border-border dark:border-white/10 bg-white dark:bg-[#1a1d27] p-3 sm:p-4 shadow-sm flex-1">
+
+          {/* Top bar */}
+          <div className="mb-3 sm:mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-slate-100 dark:bg-white/5 p-2 sm:p-3">
+            <div className="min-w-0 flex-1 sm:flex-none">
+              <p className="text-sm font-semibold dark:text-white truncate">👋 Welcome back, {firstName}!</p>
+              <p className="text-xs text-muted-foreground dark:text-white/50 hidden sm:block">Boost your skill to shine in your life.</p>
+            </div>
+            {/* Search — collapses to icon-only on xs */}
+            <label className="flex items-center gap-2 rounded-lg border border-border dark:border-white/10 bg-white dark:bg-white/5 px-2 sm:px-3 py-1.5 sm:py-2 text-sm text-muted-foreground dark:text-white/50 ml-auto sm:ml-0">
+              <Search className="h-4 w-4 shrink-0" />
+              <input
+                className="w-0 sm:w-28 md:w-40 bg-transparent text-foreground dark:text-white outline-none placeholder:text-muted-foreground dark:placeholder:text-white/30 text-xs sm:text-sm transition-all duration-200 focus:w-32 sm:focus:w-40"
                 placeholder="Search lessons"
                 value={sidebarSearch}
-                onChange={(event) => setSidebarSearch(event.target.value)}
+                onChange={(e) => setSidebarSearch(e.target.value)}
               />
             </label>
-              <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full text-slate-700 hover:bg-white hover:text-primary"
-              aria-label="Toggle AI chat assistant sidebar"
+            {/* AI toggle */}
+            <Button
+              variant="ghost" size="icon"
+              className="h-8 w-8 rounded-full text-slate-700 dark:text-white/70 hover:bg-white dark:hover:bg-white/10 hover:text-primary shrink-0"
+              aria-label="Toggle AI chat assistant"
               aria-expanded={aiChatOpen}
               onClick={() => setAiChatOpen((open) => !open)}
             >
               <MessageCircle className="h-4 w-4" />
             </Button>
-            <Bell className="h-4 w-4" />
-            <Link
-              to={`/course/${slug}`}
-              className="text-xs text-muted-foreground underline"
-            >
-              Back
-            </Link>
+            <Bell className="h-4 w-4 shrink-0 text-muted-foreground dark:text-white/50" />
+            <Link to={`/course/${slug}`} className="text-xs text-muted-foreground dark:text-white/50 underline underline-offset-2 shrink-0">Back</Link>
           </div>
 
-          <div className="rounded-xl bg-[#f8f8fc] p-4">
-            <p className="mb-3 text-sm font-medium">
-              Courses ·{" "}
-              <span className="text-muted-foreground">{course.title}</span>
+          <div className="rounded-xl bg-[#f8f8fc] dark:bg-white/[0.03] p-2.5 sm:p-4">
+            <p className="mb-2 sm:mb-3 text-xs sm:text-sm font-medium dark:text-white/80 truncate">
+              Courses · <span className="text-muted-foreground dark:text-white/40">{course.title}</span>
             </p>
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_330px]">
-              {/* ── Video + hub panel ── */}
-              <div>
-                <div className="overflow-hidden rounded-xl bg-black">
-                  {activeLecture?.video_url ? (
-                    <div className="relative w-full h-full flex items-center justify-center">
-                      <video
-                        ref={videoRef}
-                        key={activeLecture.id}
-                        src={activeLecture.video_url}
-                        controls
-                        autoPlay
-                        controlsList="nodownload noremoteplayback"
-                        disablePictureInPicture
-                        onContextMenu={(e) => e.preventDefault()}
-                        className={`aspect-video w-full object-cover select-none ${
-                          recordingBlocked ? "invisible" : ""
-                        }`}
-                        onEnded={handleVideoEnded}
-                        onPause={handlePause}
-                      />
-                      {recordingBlocked && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 text-center p-6">
-                          <Lock className="h-10 w-10 text-destructive" />
-                          <h3 className="font-display text-lg font-semibold text-foreground">
-                            Playback paused
-                          </h3>
-                          <p className="text-sm text-muted-foreground max-w-sm">
-                            {blockReason}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex aspect-video items-center justify-center text-white">
-                      <PlayCircle className="mr-2 h-5 w-5" /> No video
-                      available
+            {/* Video */}
+            <div className="overflow-hidden rounded-xl bg-black">
+              {activeLecture?.video_url ? (
+                <div className="relative w-full flex items-center justify-center">
+                  <video
+                    ref={videoRef}
+                    key={activeLecture.id}
+                    src={activeLecture.video_url}
+                    controls autoPlay
+                    controlsList="nodownload noremoteplayback"
+                    disablePictureInPicture
+                    onContextMenu={(e) => e.preventDefault()}
+                    className={`aspect-video w-full object-cover select-none ${recordingBlocked ? "invisible" : ""}`}
+                    onEnded={handleVideoEnded}
+                    onPause={handlePause}
+                  />
+                  {recordingBlocked && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 dark:bg-black/90 text-center p-4 sm:p-6">
+                      <Lock className="h-8 w-8 sm:h-10 sm:w-10 text-destructive" />
+                      <h3 className="font-display text-base sm:text-lg font-semibold text-foreground dark:text-white">Playback paused</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground dark:text-white/60 max-w-xs sm:max-w-sm">{blockReason}</p>
                     </div>
                   )}
                 </div>
-
-                <div className="mt-2 flex items-center gap-2 text-muted-foreground">
-                  <Volume2 className="h-4 w-4" />
-                  <Captions className="h-4 w-4" />
-                  <Cog className="h-4 w-4" />
+              ) : (
+                <div className="flex aspect-video items-center justify-center text-white text-sm">
+                  <PlayCircle className="mr-2 h-5 w-5" /> No video available
                 </div>
+              )}
+            </div>
 
-                {/* FIX 5: Removed the duplicate hardcoded static Enroll/Favourite
-                    buttons that appeared after the real conditional ones */}
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">Advance</Badge>
-                  <Badge variant="secondary">Live Class</Badge>
-                  <Badge variant="secondary">2k Class</Badge>
-                  <Button
-                    className="ml-auto"
-                    size="sm"
-                    onClick={() => {
-                      if (hasAccess) {
-                        toast.success(
-                          "You already have access to this course"
-                        );
-                        return;
-                      }
-                      logPurchaseAttempt(activeLectureId || undefined);
-                      setBuyDialogOpen(true);
-                    }}
-                  >
-                    {hasAccess ? "Enrolled" : "Enroll Now"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={wishlistMutation.isPending}
-                    onClick={() => wishlistMutation.mutate()}
-                  >
-                    <Heart
-                      className={`mr-1 h-4 w-4 ${
-                        wishlistItem ? "fill-current text-rose-500" : ""
-                      }`}
-                    />
-                    {wishlistItem ? "Favourited" : "Add to Favourite"}
-                  </Button>
-                </div>
+            {/* Video controls row */}
+            <div className="mt-2 flex items-center gap-3 text-muted-foreground dark:text-white/40">
+              <Volume2 className="h-4 w-4" />
+              <Captions className="h-4 w-4" />
+              <Cog className="h-4 w-4" />
+            </div>
 
-                <h1 className="mt-3 font-display text-3xl font-bold">
-                  {course.title}
-                </h1>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {course.description ||
-                    "This comprehensive course covers practical testing and UX law concepts with real-world examples."}
+            {/* Badges + actions */}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">Advance</Badge>
+              <Badge variant="secondary">Live Class</Badge>
+              <Badge variant="secondary" className="hidden sm:inline-flex">2k Class</Badge>
+              <div className="ml-auto flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (hasAccess) { toast.success("You already have access to this course"); return; }
+                    logPurchaseAttempt(activeLectureId || undefined);
+                    setBuyDialogOpen(true);
+                  }}
+                >
+                  {hasAccess ? "Enrolled" : "Enroll Now"}
+                </Button>
+                <Button
+                  variant="outline" size="sm"
+                  disabled={wishlistMutation.isPending}
+                  onClick={() => wishlistMutation.mutate()}
+                  className="dark:border-white/10 dark:text-white dark:hover:bg-white/10"
+                >
+                  <Heart className={`h-4 w-4 ${wishlistItem ? "fill-current text-rose-500" : ""} sm:mr-1`} />
+                  <span className="hidden sm:inline">{wishlistItem ? "Favourited" : "Add to Favourite"}</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Title + description */}
+            <h1 className="mt-3 font-display text-lg sm:text-2xl lg:text-3xl font-bold dark:text-white leading-tight">{course.title}</h1>
+            <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-muted-foreground dark:text-white/50 line-clamp-3 sm:line-clamp-none">
+              {course.description || "This comprehensive course covers practical testing and UX law concepts with real-world examples."}
+            </p>
+
+            {/* Instructor card */}
+            <div className="mt-3 sm:mt-4 rounded-xl border border-border dark:border-white/10 bg-white dark:bg-white/5 p-3">
+              <p className="text-xs text-muted-foreground dark:text-white/40">Instructor</p>
+              <p className="font-semibold dark:text-white">{instructorName}</p>
+              <div className="mt-1 flex items-center gap-0.5 text-amber-500">
+                {Array.from({ length: 5 }).map((_, i) => (<Star key={i} className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-current" />))}
+              </div>
+            </div>
+
+            {/* Hub tabs — horizontally scrollable on mobile */}
+            <div className="mt-3 sm:mt-4 -mx-1 px-1 overflow-x-auto scrollbar-none">
+              <div className="flex gap-2 min-w-max sm:flex-wrap sm:min-w-0">
+                {(
+                  [
+                    ["courses", "Overview"], ["workshops", "Workshops"], ["certifications", "Certifications"],
+                    ["resources", "Resources"], ["events", "Events"], ["community", "Community"], ["help", "Help"],
+                  ] as const
+                ).map(([tab, label]) => (
+                  <button key={tab} type="button" onClick={() => setActiveHubTab(tab)}>
+                    <Badge
+                      className={`whitespace-nowrap cursor-pointer ${activeHubTab === tab ? "bg-violet-600 text-white dark:bg-violet-500" : "dark:border-white/20 dark:text-white/60 dark:hover:border-white/40"}`}
+                      variant={activeHubTab === tab ? "default" : "outline"}
+                    >
+                      {label}
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="mt-3 sm:mt-4">{renderHubPanel()}</div>
+
+            {/* Bottom nav */}
+            <div className="mt-3 sm:mt-4 flex items-center justify-between border-t border-border dark:border-white/10 pt-3 gap-2">
+              <Button
+                variant="ghost" size="sm"
+                disabled={activeIndex <= 0}
+                onClick={() => navigateLecture("prev")}
+                className="dark:text-white/70 dark:hover:text-white dark:hover:bg-white/10 shrink-0"
+              >
+                <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Previous</span>
+              </Button>
+              <div className="text-center min-w-0 flex-1 px-2">
+                <p className="text-xs sm:text-sm font-medium dark:text-white truncate">{activeLecture?.title}</p>
+                <p className="text-xs text-muted-foreground dark:text-white/40">
+                  <span className="hidden md:inline">{activeSection?.title || "Section"} · </span>
+                  Lecture {activeIndex + 1} of {allLectures.length}
                 </p>
+              </div>
+              <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                {overallProgress === 100 && (
+                  <Button
+                    size="sm" variant="ghost"
+                    className="text-xs gap-1 text-[hsl(var(--success))] dark:hover:bg-white/10 px-2 sm:px-3"
+                    onClick={() => generateCertificate({ studentName: profile?.full_name || user?.email || "Student", courseName: course.title, instructorName, completionDate: new Date() })}
+                  >
+                    <Award className="h-4 w-4" />
+                    <span className="hidden sm:inline">Certificate</span>
+                  </Button>
+                )}
+                <Button
+                  variant="ghost" size="sm"
+                  disabled={activeIndex >= allLectures.length - 1}
+                  onClick={() => navigateLecture("next")}
+                  className="dark:text-white/70 dark:hover:text-white dark:hover:bg-white/10 shrink-0"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="h-4 w-4 sm:ml-1" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                {/* FIX 6: Instructor card was rendering instructorName twice
-                    (once from the const and once from the raw cast) — deduplicated */}
-                <div className="mt-4 rounded-xl border bg-white p-3">
-                  <p className="text-xs text-muted-foreground">Instructor</p>
-                  <p className="font-semibold">{instructorName}</p>
-                  <div className="mt-1 flex items-center gap-1 text-amber-500">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-current" />
-                    ))}
-                  </div>
-                </div>
+        {/* ── RIGHT: Lesson sidebar ── */}
+        <aside className="w-full xl:w-[360px] xl:shrink-0 xl:sticky xl:top-4 rounded-2xl border border-border dark:border-white/10 bg-white dark:bg-[#1a1d27] shadow-sm flex flex-col">
+          <div className="p-2.5 sm:p-3">
+            <button
+              type="button"
+              onClick={() => setLessonDrawerOpen((v) => !v)}
+              className="w-full flex items-center justify-between gap-2 rounded-lg border border-border dark:border-white/10 px-3 py-2.5 text-sm font-medium hover:bg-secondary/50 dark:hover:bg-white/5 transition-colors dark:text-white"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <PlayCircle className="h-4 w-4 text-violet-600 dark:text-violet-400 shrink-0" />
+                <span>Lessons</span>
+                <Badge variant="secondary" className="text-xs shrink-0">{completedCount}/{allLectures.length}</Badge>
+              </div>
+              {lessonDrawerOpen
+                ? <ChevronUp className="h-4 w-4 text-muted-foreground dark:text-white/40 shrink-0" />
+                : <ChevronDown className="h-4 w-4 text-muted-foreground dark:text-white/40 shrink-0" />
+              }
+            </button>
 
-                {/* Hub tabs */}
-                <div className="mt-4 flex flex-wrap gap-2">
+            {lessonDrawerOpen && (
+              <div className="mt-2 rounded-lg border border-border dark:border-white/10 bg-white dark:bg-[#1e2130] shadow-lg overflow-hidden">
+                {/* Sidebar sub-tabs */}
+                <div className="border-b border-border dark:border-white/10 p-2 flex items-center gap-1 overflow-x-auto scrollbar-none">
                   {(
                     [
-                      ["courses", "Overview"],
-                      ["workshops", "Workshops"],
-                      ["certifications", "Certifications"],
-                      ["resources", "Resources"],
-                      ["events", "Events"],
-                      ["community", "Community"],
-                      ["help", "Help"],
+                      ["videos", "Videos"],
+                      ["resources", `Resources (${resources.length})`],
+                      ["support", "Support"],
                     ] as const
                   ).map(([tab, label]) => (
-                    <button
-                      key={tab}
-                      type="button"
-                      onClick={() => setActiveHubTab(tab)}
-                    >
+                    <button key={tab} type="button" onClick={() => setActiveSidebarTab(tab)} className="shrink-0">
                       <Badge
-                        className={
-                          activeHubTab === tab
-                            ? "bg-violet-600 text-white"
-                            : ""
-                        }
-                        variant={
-                          activeHubTab === tab ? "default" : "outline"
-                        }
+                        className={`whitespace-nowrap cursor-pointer ${activeSidebarTab === tab ? "bg-violet-600 text-white dark:bg-violet-500" : "dark:border-white/20 dark:text-white/60"}`}
+                        variant={activeSidebarTab === tab ? "default" : "outline"}
                       >
                         {label}
                       </Badge>
@@ -1770,98 +1912,29 @@ export default function CoursePlayer() {
                   ))}
                 </div>
 
-                <div className="mt-4">{renderHubPanel()}</div>
-                {renderNoteBoard()}
-              </div>
-
-              {/* ── Right sidebar (lesson list) ── */}
-              <div
-                className={`${
-                  sidebarOpen ? "block" : "hidden xl:block"
-                } rounded-xl border bg-white`}
-              >
-                {/* FIX 7: Removed the duplicated header block and second
-                    ScrollArea opening that broke the JSX tree */}
-                <div className="border-b p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {(
-                        [
-                          ["videos", "All Videos"],
-                          [
-                            "resources",
-                            `Resources (${resources.length})`,
-                          ],
-                          ["support", "Support"],
-                        ] as const
-                      ).map(([tab, label]) => (
-                        <button
-                          key={tab}
-                          type="button"
-                          onClick={() => setActiveSidebarTab(tab)}
-                        >
-                          <Badge
-                            className={
-                              activeSidebarTab === tab
-                                ? "bg-violet-600 text-white"
-                                : ""
-                            }
-                            variant={
-                              activeSidebarTab === tab
-                                ? "default"
-                                : "outline"
-                            }
-                          >
-                            {label}
-                          </Badge>
-                        </button>
-                      ))}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="xl:hidden"
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {completedCount}/{allLectures.length} lessons complete
-                  </p>
-                  <Progress
-                    value={overallProgress}
-                    className="mt-2 h-1.5"
-                  />
+                <div className="px-2 pt-1.5">
+                  <p className="text-xs text-muted-foreground dark:text-white/40">{completedCount}/{allLectures.length} lessons complete</p>
+                  <Progress value={overallProgress} className="mt-1 h-1" />
                 </div>
 
-                <ScrollArea className="h-[560px]">
+                <ScrollArea className="h-64 sm:h-72">
                   <div className="p-2">
                     {activeSidebarTab === "videos" &&
                       (visibleSections && visibleSections.length > 0 ? (
                         visibleSections.map((section) => (
                           <div key={section.id} className="mb-1">
                             <button
-                              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/50 transition-colors text-left"
+                              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-secondary/50 dark:hover:bg-white/5 transition-colors text-left"
                               onClick={() => toggleSection(section.id)}
                             >
-                              {expandedSections.has(section.id) ? (
-                                <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
-                              ) : (
-                                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                              )}
+                              {expandedSections.has(section.id)
+                                ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground dark:text-white/40" />
+                                : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground dark:text-white/40" />
+                              }
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">
-                                  {section.title}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {section.lectures.length} lessons ·{" "}
-                                  {formatChapterDuration(
-                                    section.lectures.reduce(
-                                      (sum, l) => sum + (l.duration || 0),
-                                      0
-                                    )
-                                  )}
+                                <p className="text-sm font-medium truncate dark:text-white">{section.title}</p>
+                                <p className="text-xs text-muted-foreground dark:text-white/40">
+                                  {section.lectures.length} lessons · {formatChapterDuration(section.lectures.reduce((sum, l) => sum + (l.duration || 0), 0))}
                                 </p>
                               </div>
                             </button>
@@ -1869,46 +1942,35 @@ export default function CoursePlayer() {
                             {expandedSections.has(section.id) && (
                               <div className="ml-2 space-y-0.5">
                                 {section.lectures.map((lecture) => {
-                                  const completed = isLectureCompleted(
-                                    lecture.id
-                                  );
-                                  const isActive =
-                                    lecture.id === activeLectureId;
+                                  const completed = isLectureCompleted(lecture.id);
+                                  const isActive = lecture.id === activeLectureId;
                                   const locked = isLectureLocked(lecture);
                                   return (
                                     <button
                                       key={lecture.id}
                                       className={`w-full flex items-center gap-2 p-2.5 pl-4 rounded-lg text-left transition-colors text-sm ${
                                         isActive
-                                          ? "bg-primary/10 text-primary"
-                                          : "hover:bg-secondary/50 text-foreground"
+                                          ? "bg-primary/10 text-primary dark:bg-violet-500/20 dark:text-violet-400"
+                                          : "hover:bg-secondary/50 dark:hover:bg-white/5 text-foreground dark:text-white/80"
                                       } ${locked ? "opacity-70" : ""}`}
                                       onClick={() => {
-                                        if (locked) {
-                                          logPurchaseAttempt(lecture.id);
-                                          setBuyDialogOpen(true);
-                                          return;
-                                        }
+                                        if (locked) { logPurchaseAttempt(lecture.id); setBuyDialogOpen(true); return; }
                                         navigateToLecture(lecture.id);
                                       }}
                                     >
                                       {locked ? (
-                                        <Lock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                        <Lock className="h-4 w-4 shrink-0 text-muted-foreground dark:text-white/30" />
                                       ) : completed ? (
                                         <CheckCircle2 className="h-4 w-4 shrink-0 text-[hsl(var(--success))]" />
                                       ) : isActive ? (
-                                        <PlayCircle className="h-4 w-4 shrink-0 text-primary" />
+                                        <PlayCircle className="h-4 w-4 shrink-0 text-primary dark:text-violet-400" />
                                       ) : (
-                                        <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                        <Circle className="h-4 w-4 shrink-0 text-muted-foreground dark:text-white/30" />
                                       )}
-                                      <span className="flex-1 truncate">
-                                        {lecture.title}
-                                      </span>
-                                      {lecture.duration ? (
-                                        <span className="text-xs text-muted-foreground shrink-0">
-                                          {formatDuration(lecture.duration)}
-                                        </span>
-                                      ) : null}
+                                      <span className="flex-1 truncate">{lecture.title}</span>
+                                      {lecture.duration && (
+                                        <span className="text-xs text-muted-foreground dark:text-white/30 shrink-0">{formatDuration(lecture.duration)}</span>
+                                      )}
                                     </button>
                                   );
                                 })}
@@ -1917,7 +1979,7 @@ export default function CoursePlayer() {
                           </div>
                         ))
                       ) : (
-                        <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                        <div className="rounded-lg border border-dashed border-border dark:border-white/20 p-6 text-center text-sm text-muted-foreground dark:text-white/40">
                           No lessons match your search.
                         </div>
                       ))}
@@ -1925,57 +1987,42 @@ export default function CoursePlayer() {
                     {activeSidebarTab === "resources" && (
                       <div className="space-y-2">
                         {!canAccessResources && (
-                          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                          <div className="rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-300">
                             <div className="mb-1 flex items-center gap-2 font-medium">
                               <Lock className="h-4 w-4" /> Resources locked
                             </div>
-                            Purchase the course to download worksheets,
-                            PDFs, and lecture files.
+                            Purchase the course to download worksheets, PDFs, and lecture files.
                           </div>
                         )}
                         {resourcesLoading ? (
-                          <div className="p-6 text-center text-sm text-muted-foreground">
-                            Loading resources...
-                          </div>
+                          <div className="p-6 text-center text-sm text-muted-foreground dark:text-white/40">Loading resources...</div>
                         ) : visibleResources.length > 0 ? (
                           visibleResources.map((resource) => {
-                            const lecture = resource.lecture_id
-                              ? allLectures.find(
-                                  (item) =>
-                                    item.id === resource.lecture_id
-                                )
-                              : null;
+                            const lecture = resource.lecture_id ? allLectures.find((item) => item.id === resource.lecture_id) : null;
                             const size = formatFileSize(resource.file_size);
                             return (
                               <a
                                 key={`${resource.source}-${resource.id}`}
                                 href={resource.file_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-start gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-secondary/50"
+                                target="_blank" rel="noreferrer"
+                                className="flex items-start gap-3 rounded-lg border border-border dark:border-white/10 p-3 text-sm transition-colors hover:bg-secondary/50 dark:hover:bg-white/5 active:scale-[0.99]"
                               >
-                                <FileText className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
+                                <FileText className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" />
                                 <span className="min-w-0 flex-1">
-                                  <span className="block truncate font-medium">
-                                    {resource.title}
-                                  </span>
-                                  <span className="block text-xs text-muted-foreground">
+                                  <span className="block truncate font-medium dark:text-white">{resource.title}</span>
+                                  <span className="block text-xs text-muted-foreground dark:text-white/40">
                                     {lecture?.title || "Course resource"}
-                                    {resource.file_type
-                                      ? ` · ${resource.file_type}`
-                                      : ""}
+                                    {resource.file_type ? ` · ${resource.file_type}` : ""}
                                     {size ? ` · ${size}` : ""}
                                   </span>
                                 </span>
-                                <Download className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                <Download className="h-4 w-4 shrink-0 text-muted-foreground dark:text-white/30" />
                               </a>
                             );
                           })
                         ) : (
-                          <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                            {canAccessResources
-                              ? "No resources have been added for this course yet."
-                              : "No preview resources are available."}
+                          <div className="rounded-lg border border-dashed border-border dark:border-white/20 p-6 text-center text-sm text-muted-foreground dark:text-white/40">
+                            {canAccessResources ? "No resources have been added for this course yet." : "No preview resources are available."}
                           </div>
                         )}
                       </div>
@@ -1983,206 +2030,206 @@ export default function CoursePlayer() {
 
                     {activeSidebarTab === "support" && (
                       <div className="space-y-3 text-sm">
-                        <div className="rounded-lg border p-3">
-                          <p className="text-xs text-muted-foreground">
-                            Instructor support
+                        <div className="rounded-lg border border-border dark:border-white/10 p-3">
+                          <p className="text-xs text-muted-foreground dark:text-white/40">Instructor support</p>
+                          <p className="font-semibold dark:text-white">{instructorName}</p>
+                          <p className="mt-1 text-xs text-muted-foreground dark:text-white/50">
+                            Ask course questions through your account dashboard or continue reviewing the lesson list.
                           </p>
-                          <p className="font-semibold">{instructorName}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            Ask course questions through your account
-                            dashboard or continue reviewing the lesson list.
-                          </p>
-                          <Button
-                            className="mt-3 w-full"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => navigate("/profile")}
-                          >
-                            <MessageCircle className="mr-2 h-4 w-4" /> Open
-                            account center
+                          <Button className="mt-3 w-full dark:border-white/10 dark:text-white dark:hover:bg-white/10" size="sm" variant="outline" onClick={() => navigate("/profile")}>
+                            <MessageCircle className="mr-2 h-4 w-4" /> Open account center
                           </Button>
                         </div>
-                        <div className="rounded-lg border p-3">
+                        <div className="rounded-lg border border-border dark:border-white/10 p-3">
                           <div className="mb-2 flex items-center justify-between">
-                            <p className="font-semibold">Course feedback</p>
-                            {averageRating && (
-                              <Badge variant="secondary">
-                                {averageRating}/5
-                              </Badge>
-                            )}
+                            <p className="font-semibold dark:text-white">Course feedback</p>
+                            {averageRating && <Badge variant="secondary">{averageRating}/5</Badge>}
                           </div>
                           {reviews.length > 0 ? (
                             <div className="space-y-3">
                               {reviews.map((review) => (
-                                <div
-                                  key={review.id}
-                                  className="border-t pt-2 first:border-t-0 first:pt-0"
-                                >
+                                <div key={review.id} className="border-t border-border dark:border-white/10 pt-2 first:border-t-0 first:pt-0">
                                   <div className="flex items-center justify-between gap-2">
-                                    <span className="truncate font-medium">
-                                      {review.profiles?.full_name ||
-                                        "Learner"}
-                                    </span>
-                                    <span className="flex items-center gap-1 text-amber-500">
-                                      <Star className="h-3.5 w-3.5 fill-current" />{" "}
-                                      {review.rating}
+                                    <span className="truncate font-medium dark:text-white">{review.profiles?.full_name || "Learner"}</span>
+                                    <span className="flex items-center gap-1 text-amber-500 shrink-0">
+                                      <Star className="h-3.5 w-3.5 fill-current" /> {review.rating}
                                     </span>
                                   </div>
                                   {review.comment && (
-                                    <p className="mt-1 line-clamp-3 text-xs text-muted-foreground">
-                                      {review.comment}
-                                    </p>
+                                    <p className="mt-1 line-clamp-3 text-xs text-muted-foreground dark:text-white/50">{review.comment}</p>
                                   )}
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-muted-foreground">
-                              No learner reviews yet.
-                            </p>
+                            <p className="text-xs text-muted-foreground dark:text-white/40">No learner reviews yet.</p>
                           )}
                         </div>
-                        <div className="rounded-lg border p-3 text-xs text-muted-foreground">
-                          <div className="mb-1 flex items-center gap-2 font-medium text-foreground">
+                        <div className="rounded-lg border border-border dark:border-white/10 p-3 text-xs text-muted-foreground dark:text-white/40">
+                          <div className="mb-1 flex items-center gap-2 font-medium text-foreground dark:text-white">
                             <Clock className="h-4 w-4" /> Progress help
                           </div>
-                          Your video position is saved every 10 seconds
-                          while playing and whenever you pause.
+                          Your video position is saved every 10 seconds while playing and whenever you pause.
                         </div>
                       </div>
                     )}
                   </div>
                 </ScrollArea>
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* Bottom nav bar */}
-            <div className="mt-4 flex items-center justify-between border-t pt-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={activeIndex <= 0}
-                onClick={() => navigateLecture("prev")}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-              </Button>
-              <div className="text-center">
-                <p className="text-sm font-medium">{activeLecture?.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {activeSection?.title || "Section"} · Lecture{" "}
-                  {activeIndex + 1} of {allLectures.length}
-                </p>
-              </div>
+          {/* Mobile Notes accordion — visible only below xl */}
+          <div className="xl:hidden border-t border-border dark:border-white/10">
+            <button
+              type="button"
+              onClick={() => setNotesCollapsed((v) => !v)}
+              className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            >
               <div className="flex items-center gap-2">
-                {overallProgress === 100 && (
+                <StickyNote className="h-4 w-4 text-violet-600 dark:text-violet-400 shrink-0" />
+                <span className="font-display text-sm font-bold text-foreground dark:text-white">My Notes</span>
+                <Badge variant="secondary" className="text-xs">{activeLectureNotes.length}</Badge>
+              </div>
+              {notesCollapsed
+                ? <ChevronDown className="h-4 w-4 text-muted-foreground dark:text-white/50" />
+                : <ChevronUp className="h-4 w-4 text-muted-foreground dark:text-white/50" />
+              }
+            </button>
+            {!notesCollapsed && (
+              <div className="flex flex-col gap-3 px-4 pb-4">
+                <p className="text-xs text-muted-foreground dark:text-white/50">
+                  {activeLecture?.title || "Select a lesson"}
+                </p>
+                <Input
+                  placeholder="Note title"
+                  value={noteTitle}
+                  onChange={(e) => setNoteTitle(e.target.value)}
+                  className="text-sm dark:bg-[#252836] dark:border-white/10 dark:text-white dark:placeholder:text-white/30"
+                />
+                <Textarea
+                  className="min-h-20 text-sm resize-none dark:bg-[#252836] dark:border-white/10 dark:text-white dark:placeholder:text-white/30"
+                  placeholder="Key takeaways, timestamps, questions..."
+                  value={noteContent}
+                  onChange={(e) => setNoteContent(e.target.value)}
+                />
+                <div className="flex gap-2">
                   <Button
                     size="sm"
-                    variant="ghost"
-                    className="text-xs gap-1 text-[hsl(var(--success))]"
-                    onClick={() =>
-                      generateCertificate({
-                        studentName:
-                          profile?.full_name ||
-                          user?.email ||
-                          "Student",
-                        courseName: course.title,
-                        instructorName,
-                        completionDate: new Date(),
-                      })
-                    }
+                    onClick={() => saveNoteMutation.mutate()}
+                    disabled={saveNoteMutation.isPending || (!noteTitle.trim() && !noteContent.trim())}
+                    className="flex-1"
                   >
-                    <Award className="h-4 w-4" /> Certificate
+                    {editingNoteId ? "Update" : "Save note"}
                   </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="xl:hidden"
-                  onClick={() => setSidebarOpen((v) => !v)}
-                >
-                  {sidebarOpen ? (
-                    <X className="h-4 w-4" />
-                  ) : (
-                    <Menu className="h-4 w-4" />
+                  {editingNoteId && (
+                    <Button size="sm" variant="outline" onClick={cancelEditingNote}
+                      className="dark:border-white/10 dark:text-white dark:hover:bg-white/10">
+                      Cancel
+                    </Button>
                   )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={activeIndex >= allLectures.length - 1}
-                  onClick={() => navigateLecture("next")}
-                >
-                  Next <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
+                </div>
+                <ScrollArea className="max-h-48">
+                  <div className="space-y-2 pr-1">
+                    {activeLectureNotes.length > 0 ? (
+                      activeLectureNotes.map((note) => (
+                        <div key={note.id} className="rounded-lg border border-border dark:border-white/10 bg-white dark:bg-[#252836] p-2.5 text-xs">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="font-semibold truncate dark:text-white">{note.title}</p>
+                              <p className="text-muted-foreground dark:text-white/40">
+                                {new Date(note.updated_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="flex gap-1 shrink-0">
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/10" onClick={() => startEditingNote(note)}>
+                                <FileText className="h-3 w-3" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive dark:text-red-400 dark:hover:bg-red-400/10" onClick={() => deleteNoteMutation.mutate(note.id)} disabled={deleteNoteMutation.isPending}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                          {note.content && (
+                            <p className="mt-1.5 text-muted-foreground dark:text-white/50 line-clamp-3 whitespace-pre-wrap">{note.content}</p>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-lg border border-dashed border-border dark:border-white/20 p-3 text-center text-xs text-muted-foreground dark:text-white/40">
+                        No notes for this lesson yet.
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
               </div>
-            </div>
+            )}
           </div>
-        </div>
-      </div>
 
-
-      {/* ── Buy/unlock dialog ── */}
-      <Dialog open={buyDialogOpen} onOpenChange={setBuyDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-primary" /> Unlock the full
-              course
-            </DialogTitle>
-            <DialogDescription>
-              This lecture is locked. Purchase the course to unlock all
-              chapters, lectures, and downloadable resources.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-2">
-            <p className="font-display text-2xl font-bold">
-              {course.price === 0
-                ? "Free"
-                : `$${Number(course.price).toFixed(2)}`}
+          {/* Bottom utility links */}
+          <div className="border-t border-border dark:border-white/10 p-2.5 sm:p-3 space-y-0.5 text-sm mt-auto">
+            <p className="flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-secondary/50 dark:hover:bg-white/5 transition-colors cursor-pointer dark:text-white/70 dark:hover:text-white">
+              <Settings className="h-4 w-4 shrink-0" /> Settings
+            </p>
+            <p className="flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-secondary/50 dark:hover:bg-white/5 transition-colors cursor-pointer dark:text-white/70 dark:hover:text-white">
+              <HelpCircle className="h-4 w-4 shrink-0" /> Help Center
+            </p>
+            <p className="flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-secondary/50 dark:hover:bg-white/5 transition-colors cursor-pointer dark:text-white/70 dark:hover:text-white">
+              <User className="h-4 w-4 shrink-0" /> My Account
             </p>
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setBuyDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Link to={`/course/${slug}`}>
-              <Button
-                className="gradient-primary text-primary-foreground"
-                onClick={() => toast.info("Redirecting to course page")}
-              >
-                {course.price === 0 ? "Enroll for Free" : "Buy Now"}
-              </Button>
-            </Link>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </aside>
 
-      {/* ── Chapter quiz dialog ── */}
-      {quizSectionId && course && user && (
-        <ChapterQuizDialog
-          open={!!quizSectionId}
-          onOpenChange={(o) => {
-            if (!o) setQuizSectionId(null);
-          }}
-          sectionId={quizSectionId}
-          sectionTitle={
-            sections?.find((s) => s.id === quizSectionId)?.title ||
-            "Chapter"
-          }
-          courseId={course.id}
-          userId={user.id}
-          onContinue={() => skipToNextSection(quizSectionId)}
-          onSkipNext={() => skipToNextSection(quizSectionId)}
-          onRevise={(wrongIds) => {
-            if (wrongIds.length === 0) return;
-            setRevisionQueue(wrongIds);
-            navigateToLecture(wrongIds[0]);
-          }}
-        />
-      )}
-    </div>
-  );
+      </div>{/* end flex row */}
+    </div>{/* end max-w container */}
+
+    {/* ── Buy/unlock dialog ── */}
+    <Dialog open={buyDialogOpen} onOpenChange={setBuyDialogOpen}>
+      <DialogContent className="dark:bg-[#1a1d27] dark:border-white/10 max-w-sm mx-4 sm:mx-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 dark:text-white">
+            <Lock className="h-5 w-5 text-primary" /> Unlock the full course
+          </DialogTitle>
+          <DialogDescription className="dark:text-white/50">
+            This lecture is locked. Purchase the course to unlock all chapters, lectures, and downloadable resources.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-2">
+          <p className="font-display text-2xl font-bold dark:text-white">
+            {course.price === 0 ? "Free" : `$${Number(course.price).toFixed(2)}`}
+          </p>
+        </div>
+        <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+          <Button variant="outline" onClick={() => setBuyDialogOpen(false)} className="dark:border-white/10 dark:text-white dark:hover:bg-white/10 w-full sm:w-auto">
+            Cancel
+          </Button>
+          <Link to={`/course/${slug}`} className="w-full sm:w-auto">
+            <Button className="gradient-primary text-primary-foreground w-full" onClick={() => toast.info("Redirecting to course page")}>
+              {course.price === 0 ? "Enroll for Free" : "Buy Now"}
+            </Button>
+          </Link>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* ── Chapter quiz dialog ── */}
+    {quizSectionId && course && user && (
+      <ChapterQuizDialog
+        open={!!quizSectionId}
+        onOpenChange={(o) => { if (!o) setQuizSectionId(null); }}
+        sectionId={quizSectionId}
+        sectionTitle={sections?.find((s) => s.id === quizSectionId)?.title || "Chapter"}
+        courseId={course.id}
+        userId={user.id}
+        onContinue={() => skipToNextSection(quizSectionId)}
+        onSkipNext={() => skipToNextSection(quizSectionId)}
+        onRevise={(wrongIds) => {
+          if (wrongIds.length === 0) return;
+          setRevisionQueue(wrongIds);
+          navigateToLecture(wrongIds[0]);
+        }}
+      />
+    )}
+  </div>
+);
 }

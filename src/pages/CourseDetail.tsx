@@ -29,13 +29,14 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
+
 export default function CourseDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [buyDialogOpen, setBuyDialogOpen] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-    const [couponCode, setCouponCode] = useState("");
+  const [couponCode, setCouponCode] = useState("");
 
   const { data: course, isLoading } = useQuery({
     queryKey: ["course", slug],
@@ -209,7 +210,7 @@ export default function CourseDetail() {
       setCheckoutLoading(false);
     }
   };
-
+  
   const logPurchaseAttempt = async (lectureId?: string) => {
     if (!course) return;
     await supabase.from("purchase_attempts").insert({
@@ -452,7 +453,7 @@ export default function CourseDetail() {
             <p className="font-display text-2xl font-bold">
               {course.price === 0 ? "Free" : `$${Number(course.price).toFixed(2)}`}
             </p>
-                      {user && course.price > 0 && (
+            {user && course.price > 0 && (
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Have a coupon?</label>
                 <input

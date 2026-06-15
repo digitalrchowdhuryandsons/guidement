@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, ShoppingCart, Heart, Menu, X } from "lucide-react";
+import { Search, Heart, Menu, X, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -9,6 +9,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -27,11 +28,14 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl">
-      <div className="container flex h-16 items-center gap-28">
-        <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold">
-          <img src="/logo.png" alt="" className="w-30 h-20" />
+      <div className="container flex h-20 items-center gap-4">
+
+        {/* ── Nav dropdown (logo trigger) ── */}
+        <Link to="/" className="flex items-center gap-2">
+         <img src="/logo1.png" alt="GuideMent" className="h-20 w-auto" />
         </Link>
 
+        {/* ── Search ── */}
         <form onSubmit={handleSearch} className="hidden flex-1 md:flex max-w-xl">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -44,7 +48,45 @@ export function Navbar() {
           </div>
         </form>
 
-        <div className="hidden md:flex items-center gap-2">
+        {/* ── Desktop right actions ── */}
+        <div className="hidden md:flex items-center gap-2 ml-auto">
+
+
+           <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+       <Button
+  variant="ghost"
+  size="sm"
+  className="flex items-center gap-6 px-2 hover:bg-secondary/60"
+>
+  <LayoutDashboard className="h-5 w-5 text-muted-foreground" />
+</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+              Navigate
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate("/")}>
+              Home
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/wishlist")}>
+              Bookmark
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => navigate("/courses")}
+              className="font-semibold text-violet-600 focus:text-violet-600"
+            >
+              Courses
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/workshops")}>
+              Workshop
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/resources")}>
+              Resources
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
           <Link to="/courses">
             <Button variant="ghost" size="sm">Explore</Button>
           </Link>
@@ -69,20 +111,25 @@ export function Navbar() {
                   <Heart className="h-5 w-5" />
                 </Button>
               </Link>
+
+              {/* ── User avatar dropdown ── */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={profile?.avatar_url || ""} />
                       <AvatarFallback className="gradient-primary text-primary-foreground text-xs">
-                        {profile?.full_name?.charAt(0) || user.email?.charAt(0)?.toUpperCase()}
+                        {profile?.full_name?.charAt(0) ||
+                          user.email?.charAt(0)?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="px-3 py-2">
-                    <p className="text-sm font-medium">{profile?.full_name || "User"}</p>
+                    <p className="text-sm font-medium">
+                      {profile?.full_name || "User"}
+                    </p>
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
@@ -93,7 +140,9 @@ export function Navbar() {
                     Profile
                   </DropdownMenuItem>
                   {hasRole("instructor") && (
-                    <DropdownMenuItem onClick={() => navigate("/instructor/dashboard")}>
+                    <DropdownMenuItem
+                      onClick={() => navigate("/instructor/dashboard")}
+                    >
                       Instructor Dashboard
                     </DropdownMenuItem>
                   )}
@@ -104,7 +153,7 @@ export function Navbar() {
                   )}
                   {hasRole("super_admin" as any) && (
                     <DropdownMenuItem onClick={() => navigate("/super-admin")}>
-                      <span className="flex items-center gap-1.5">Super Admin</span>
+                      Super Admin
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
@@ -118,7 +167,10 @@ export function Navbar() {
                 <Button variant="ghost" size="sm">Sign In</Button>
               </Link>
               <Link to="/auth?tab=register">
-                <Button size="sm" className="gradient-primary text-primary-foreground rounded-full">
+                <Button
+                  size="sm"
+                  className="gradient-primary text-primary-foreground rounded-full"
+                >
                   Get Started
                 </Button>
               </Link>
@@ -126,6 +178,7 @@ export function Navbar() {
           )}
         </div>
 
+        {/* ── Mobile menu toggle ── */}
         <Button
           variant="ghost"
           size="icon"
@@ -136,6 +189,7 @@ export function Navbar() {
         </Button>
       </div>
 
+      {/* ── Mobile menu ── */}
       {mobileMenu && (
         <div className="border-t md:hidden p-4 space-y-3 animate-fade-in">
           <form onSubmit={handleSearch}>
@@ -149,14 +203,68 @@ export function Navbar() {
               />
             </div>
           </form>
-          <Link to="/courses" className="block py-2" onClick={() => setMobileMenu(false)}>Explore</Link>
+          <Link
+            to="/"
+            className="block py-2"
+            onClick={() => setMobileMenu(false)}
+          >
+            Home
+          </Link>
+          <Link
+            to="/courses"
+            className="block py-2 font-semibold text-violet-600"
+            onClick={() => setMobileMenu(false)}
+          >
+            Courses
+          </Link>
+          <Link
+            to="/wishlist"
+            className="block py-2"
+            onClick={() => setMobileMenu(false)}
+          >
+            Bookmark
+          </Link>
+          <Link
+            to="/workshops"
+            className="block py-2"
+            onClick={() => setMobileMenu(false)}
+          >
+            Workshop
+          </Link>
+          <Link
+            to="/resources"
+            className="block py-2"
+            onClick={() => setMobileMenu(false)}
+          >
+            Resources
+          </Link>
           {user ? (
             <>
-              <Link to="/dashboard" className="block py-2" onClick={() => setMobileMenu(false)}>My Learning</Link>
-              <button onClick={() => { signOut(); setMobileMenu(false); }} className="block py-2 text-destructive">Sign Out</button>
+              <Link
+                to="/dashboard"
+                className="block py-2"
+                onClick={() => setMobileMenu(false)}
+              >
+                My Learning
+              </Link>
+              <button
+                onClick={() => {
+                  signOut();
+                  setMobileMenu(false);
+                }}
+                className="block py-2 text-destructive"
+              >
+                Sign Out
+              </button>
             </>
           ) : (
-            <Link to="/auth" className="block py-2" onClick={() => setMobileMenu(false)}>Sign In</Link>
+            <Link
+              to="/auth"
+              className="block py-2"
+              onClick={() => setMobileMenu(false)}
+            >
+              Sign In
+            </Link>
           )}
         </div>
       )}
