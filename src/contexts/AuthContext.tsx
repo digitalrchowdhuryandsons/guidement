@@ -53,13 +53,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
           setTimeout(() => {
             fetchProfile(session.user.id);
             fetchRoles(session.user.id);
+                 if (event === "SIGNED_IN") {
+              import("@/lib/affiliateTracking").then((m) =>
+                m.attributeSignupIfPossible().catch(() => {})
+              );
+            }
           }, 0);
         } else {
           setProfile(null);

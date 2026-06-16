@@ -14,6 +14,748 @@ export type Database = {
   }
   public: {
     Tables: {
+       affiliate_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          affiliate_id: string | null
+          created_at: string
+          id: string
+          meta: Json
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          affiliate_id?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          affiliate_id?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_audit_log_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_links: {
+        Row: {
+          affiliate_id: string
+          campaign_id: string | null
+          clicks: number
+          conversions: number
+          course_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          landing_path: string
+          slug: string
+          updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          campaign_id?: string | null
+          clicks?: number
+          conversions?: number
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          landing_path?: string
+          slug: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          campaign_id?: string | null
+          clicks?: number
+          conversions?: number
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          landing_path?: string
+          slug?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_links_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_links_campaign_fk"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_links_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliates: {
+        Row: {
+          audience_size: string | null
+          code: string
+          created_at: string
+          display_name: string | null
+          id: string
+          payout_details: Json
+          payout_method: Database["public"]["Enums"]["payout_method"] | null
+          promo_channels: string | null
+          risk_score: number
+          status: Database["public"]["Enums"]["affiliate_status"]
+          suspended_reason: string | null
+          tax_id: string | null
+          terms_accepted_at: string | null
+          total_clicks: number
+          total_earned_cents: number
+          total_paid_cents: number
+          total_sales: number
+          total_signups: number
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          audience_size?: string | null
+          code: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          payout_details?: Json
+          payout_method?: Database["public"]["Enums"]["payout_method"] | null
+          promo_channels?: string | null
+          risk_score?: number
+          status?: Database["public"]["Enums"]["affiliate_status"]
+          suspended_reason?: string | null
+          tax_id?: string | null
+          terms_accepted_at?: string | null
+          total_clicks?: number
+          total_earned_cents?: number
+          total_paid_cents?: number
+          total_sales?: number
+          total_signups?: number
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          audience_size?: string | null
+          code?: string
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          payout_details?: Json
+          payout_method?: Database["public"]["Enums"]["payout_method"] | null
+          promo_channels?: string | null
+          risk_score?: number
+          status?: Database["public"]["Enums"]["affiliate_status"]
+          suspended_reason?: string | null
+          tax_id?: string | null
+          terms_accepted_at?: string | null
+          total_clicks?: number
+          total_earned_cents?: number
+          total_paid_cents?: number
+          total_sales?: number
+          total_signups?: number
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      analytics_snapshots: {
+        Row: {
+          affiliate_id: string
+          clicks: number
+          commission_cents: number
+          created_at: string
+          id: string
+          revenue_cents: number
+          sales: number
+          signups: number
+          snapshot_date: string
+          unique_clicks: number
+        }
+        Insert: {
+          affiliate_id: string
+          clicks?: number
+          commission_cents?: number
+          created_at?: string
+          id?: string
+          revenue_cents?: number
+          sales?: number
+          signups?: number
+          snapshot_date: string
+          unique_clicks?: number
+        }
+        Update: {
+          affiliate_id?: string
+          clicks?: number
+          commission_cents?: number
+          created_at?: string
+          id?: string
+          revenue_cents?: number
+          sales?: number
+          signups?: number
+          snapshot_date?: string
+          unique_clicks?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_snapshots_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          bonus_flat_cents: number | null
+          bonus_percent: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          bonus_flat_cents?: number | null
+          bonus_percent?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bonus_flat_cents?: number | null
+          bonus_percent?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+       click_events: {
+        Row: {
+          affiliate_id: string
+          browser: string | null
+          campaign_id: string | null
+          country: string | null
+          created_at: string
+          device: string | null
+          id: string
+          ip_hash: string | null
+          is_bot: boolean
+          is_unique: boolean
+          landing_page: string | null
+          link_id: string | null
+          os: string | null
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          visitor_id: string
+        }
+        Insert: {
+          affiliate_id: string
+          browser?: string | null
+          campaign_id?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          id?: string
+          ip_hash?: string | null
+          is_bot?: boolean
+          is_unique?: boolean
+          landing_page?: string | null
+          link_id?: string | null
+          os?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visitor_id: string
+        }
+        Update: {
+          affiliate_id?: string
+          browser?: string | null
+          campaign_id?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          id?: string
+          ip_hash?: string | null
+          is_bot?: boolean
+          is_unique?: boolean
+          landing_page?: string | null
+          link_id?: string | null
+          os?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "click_events_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "click_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "click_events_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_rules: {
+        Row: {
+          attribution_model: string
+          cookie_days: number
+          course_id: string | null
+          created_at: string
+          flat_cents: number | null
+          id: string
+          is_active: boolean
+          percent: number | null
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          attribution_model?: string
+          cookie_days?: number
+          course_id?: string | null
+          created_at?: string
+          flat_cents?: number | null
+          id?: string
+          is_active?: boolean
+          percent?: number | null
+          scope: string
+          updated_at?: string
+        }
+        Update: {
+          attribution_model?: string
+          cookie_days?: number
+          course_id?: string | null
+          created_at?: string
+          flat_cents?: number | null
+          id?: string
+          is_active?: boolean
+          percent?: number | null
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_rules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commissions: {
+        Row: {
+          affiliate_id: string
+          amount_cents: number
+          approved_at: string | null
+          base_cents: number
+          campaign_id: string | null
+          course_id: string | null
+          created_at: string
+          currency: string
+          flat_cents: number | null
+          id: string
+          notes: string | null
+          paid_at: string | null
+          purchase_id: string
+          rate_percent: number | null
+          referral_id: string | null
+          reversed_at: string | null
+          rule_snapshot: Json
+          state: Database["public"]["Enums"]["commission_state"]
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          amount_cents: number
+          approved_at?: string | null
+          base_cents: number
+          campaign_id?: string | null
+          course_id?: string | null
+          created_at?: string
+          currency?: string
+          flat_cents?: number | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          purchase_id: string
+          rate_percent?: number | null
+          referral_id?: string | null
+          reversed_at?: string | null
+          rule_snapshot?: Json
+          state?: Database["public"]["Enums"]["commission_state"]
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          amount_cents?: number
+          approved_at?: string | null
+          base_cents?: number
+          campaign_id?: string | null
+          course_id?: string | null
+          created_at?: string
+          currency?: string
+          flat_cents?: number | null
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          purchase_id?: string
+          rate_percent?: number | null
+          referral_id?: string | null
+          reversed_at?: string | null
+          rule_snapshot?: Json
+          state?: Database["public"]["Enums"]["commission_state"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: true
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+       fraud_reports: {
+        Row: {
+          affiliate_id: string
+          created_at: string
+          id: string
+          reviewer_id: string | null
+          reviewer_notes: string | null
+          risk_score: number
+          rule_hits: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          created_at?: string
+          id?: string
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          risk_score?: number
+          rule_hits?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          created_at?: string
+          id?: string
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          risk_score?: number
+          rule_hits?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_reports_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+        payout_transactions: {
+        Row: {
+          affiliate_id: string
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          provider: string
+          provider_ref: string | null
+          raw: Json
+          status: string
+          withdrawal_id: string
+        }
+        Insert: {
+          affiliate_id: string
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          provider: string
+          provider_ref?: string | null
+          raw?: Json
+          status: string
+          withdrawal_id: string
+        }
+        Update: {
+          affiliate_id?: string
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          provider?: string
+          provider_ref?: string | null
+          raw?: Json
+          status?: string
+          withdrawal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_transactions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payout_transactions_withdrawal_id_fkey"
+            columns: ["withdrawal_id"]
+            isOneToOne: false
+            referencedRelation: "withdrawals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+       referrals: {
+        Row: {
+          affiliate_id: string
+          attributed_at: string | null
+          campaign_id: string | null
+          created_at: string
+          expires_at: string
+          first_click_at: string
+          id: string
+          last_click_at: string
+          link_id: string | null
+          user_id: string | null
+          visitor_id: string
+        }
+        Insert: {
+          affiliate_id: string
+          attributed_at?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          expires_at: string
+          first_click_at: string
+          id?: string
+          last_click_at: string
+          link_id?: string | null
+          user_id?: string | null
+          visitor_id: string
+        }
+        Update: {
+          affiliate_id?: string
+          attributed_at?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          expires_at?: string
+          first_click_at?: string
+          id?: string
+          last_click_at?: string
+          link_id?: string | null
+          user_id?: string | null
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+        withdrawals: {
+        Row: {
+          affiliate_id: string
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          method: Database["public"]["Enums"]["payout_method"]
+          payout_details: Json
+          processed_at: string | null
+          razorpay_payout_id: string | null
+          rejection_reason: string | null
+          requested_at: string
+          reviewer_id: string | null
+          state: Database["public"]["Enums"]["withdrawal_state"]
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          method: Database["public"]["Enums"]["payout_method"]
+          payout_details?: Json
+          processed_at?: string | null
+          razorpay_payout_id?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          reviewer_id?: string | null
+          state?: Database["public"]["Enums"]["withdrawal_state"]
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          method?: Database["public"]["Enums"]["payout_method"]
+          payout_details?: Json
+          processed_at?: string | null
+          razorpay_payout_id?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          reviewer_id?: string | null
+          state?: Database["public"]["Enums"]["withdrawal_state"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -1015,8 +1757,8 @@ export type Database = {
     Views: {
       [_ in never]: never
     }
-    Functions: {
-       admin_list_users: {
+ Functions: {
+      admin_list_users: {
         Args: never
         Returns: {
           avatar_url: string
@@ -1047,10 +1789,36 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_coupon_use: { Args: { _coupon_id: string }; Returns: boolean }
+      is_affiliate_owner: { Args: { _affiliate_id: string }; Returns: boolean }
       is_lecture_preview: { Args: { _lecture_id: string }; Returns: boolean }
+      validate_coupon: {
+        Args: { _code: string; _course_id: string; _price: number }
+        Returns: {
+          coupon_id: string
+          discount: number
+          discounted_price: number
+          reason: string
+        }[]
+      }
     }
     Enums: {
-      app_role: "student" | "instructor" | "admin" | "super_admin"
+      affiliate_status: "pending" | "approved" | "rejected" | "suspended"
+      app_role: "student" | "instructor" | "admin" | "super_admin" | "affiliate"
+      commission_state:
+        | "pending"
+        | "approved"
+        | "paid"
+        | "rejected"
+        | "reversed"
+      payout_method: "bank" | "upi" | "paypal" | "stripe"
+      withdrawal_state:
+        | "requested"
+        | "approved"
+        | "processing"
+        | "paid"
+        | "failed"
+        | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1178,7 +1946,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["student", "instructor", "admin", "super_admin"],
+      affiliate_status: ["pending", "approved", "rejected", "suspended"],
+      app_role: ["student", "instructor", "admin", "super_admin", "affiliate"],
+      commission_state: ["pending", "approved", "paid", "rejected", "reversed"],
+      payout_method: ["bank", "upi", "paypal", "stripe"],
+      withdrawal_state: [
+        "requested",
+        "approved",
+        "processing",
+        "paid",
+        "failed",
+        "rejected",
+      ],
     },
   },
 } as const

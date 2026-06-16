@@ -139,6 +139,9 @@ export function Navbar() {
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     Profile
                   </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate("/affiliate")}>
+                    Affiliate Program
+                  </DropdownMenuItem>
                   {hasRole("instructor") && (
                     <DropdownMenuItem
                       onClick={() => navigate("/instructor/dashboard")}
