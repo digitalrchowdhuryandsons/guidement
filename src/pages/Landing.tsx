@@ -64,6 +64,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen">
+      
             <SiteAnnouncement />
     
       {/* Hero */}
@@ -189,6 +190,8 @@ export default function Landing() {
 <section className="py-16 md:py-24">
 
   </section>
+
+
       {/* CTA */}
       <section className="py-16 md:py-24">
         <div className="container">
@@ -217,9 +220,9 @@ export default function Landing() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold mb-4">
-                     <img src="/logo1.png" alt="" className="w-30 h-20" />
+               <img src="/logo1.png" alt="" className="w-30 h-20" />
               </Link>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground pl-5">
                 The best place to learn new skills and advance your career.
               </p>
             </div>

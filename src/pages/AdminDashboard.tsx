@@ -25,6 +25,8 @@ import UsersManagement from "@/components/admin/UsersManagement";
 import SiteContentEditor from "@/components/admin/SiteContentEditor";
 import CouponsManagement from "@/components/admin/CouponsManagement";
 import CouponRedemptions from "@/components/admin/CouponRedemptions";
+import RevenueAnalyticsPanel from "@/components/admin/ReveneuAnalyticsPanel";
+import StudentProgressPanel from "@/components/admin/StudentProgressPanel";
 
 export default function AdminDashboard() {
   const { user, loading, hasRole } = useAuth();
@@ -134,10 +136,9 @@ export default function AdminDashboard() {
           </Card>
         ))}
       </div>
-
-      <Tabs defaultValue="courses" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="courses" className="relative">
+   <Tabs defaultValue="courses" className="space-y-6">
+   <TabsList className="flex flex-wrap gap-1 h-auto p-1">
+      <TabsTrigger value="courses" className="relative">
             Course Approvals
             {pendingCourses && pendingCourses.length > 0 && (
               <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
@@ -161,6 +162,8 @@ export default function AdminDashboard() {
           <TabsTrigger value="coupons">Coupons</TabsTrigger>
           <TabsTrigger value="redemptions">Redemptions</TabsTrigger>
           <TabsTrigger value="hub">Course Hub</TabsTrigger>
+          <TabsTrigger value="revenue">Revenue</TabsTrigger>
+          <TabsTrigger value="progress">Student Progress</TabsTrigger>
         </TabsList>
 
         {/* Course Approvals */}
@@ -329,6 +332,14 @@ export default function AdminDashboard() {
 
         <TabsContent value="hub">
           <CoursePlayerHubAdminPanel />
+        </TabsContent>
+
+        <TabsContent value="revenue">
+          <RevenueAnalyticsPanel />
+        </TabsContent>
+
+        <TabsContent value="progress">
+          <StudentProgressPanel />
         </TabsContent>
         
       </Tabs>

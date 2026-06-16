@@ -21,12 +21,20 @@ import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import BecomeInstructor from "./pages/BecomeInstructor";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import RefRedirect from "./pages/RefRedirect";
+import AffiliateLanding from "./pages/affiliate/AffiliateLanding";
+import AffiliateShell from "./pages/affiliate/AffiliateShell";
+import AffiliateDashboard from "./pages/affiliate/AffiliateDashboard";
+import AffiliateLinks from "./pages/affiliate/AffiliateLinks";
+import AffiliateAnalytics from "./pages/affiliate/AffiliateAnalytics";
+import AffiliateCommissions from "./pages/affiliate/AffiliateCommissions";
+import AffiliatePayouts from "./pages/affiliate/AffiliatePayouts";
 
 const queryClient = new QueryClient();
 
 function AppLayout() {
   const location = useLocation();
-  const hideNavbar = location.pathname.startsWith("/learn/");
+   const hideNavbar = location.pathname.startsWith("/learn/") || location.pathname.startsWith("/ref/");
 
   return (
     <>
@@ -48,6 +56,15 @@ function AppLayout() {
         <Route path="/become-instructor" element={<BecomeInstructor />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<NotFound />} />
+          <Route path="/ref/:code" element={<RefRedirect />} />
+          <Route path="/affiliate" element={<AffiliateLanding />} />
+          <Route path="/affiliate" element={<AffiliateShell />}>
+          <Route path="dashboard" element={<AffiliateDashboard />} />
+          <Route path="links" element={<AffiliateLinks />} />
+          <Route path="analytics" element={<AffiliateAnalytics />} />
+          <Route path="commissions" element={<AffiliateCommissions />} />
+          <Route path="payouts" element={<AffiliatePayouts />} />
+         </Route>
       </Routes>
     </>
   );
