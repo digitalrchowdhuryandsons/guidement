@@ -433,6 +433,332 @@ export type Database = {
           },
         ]
       }
+      course_price_tiers: {
+  Row: {
+    id: string
+    course_id: string
+    region_code: string
+    label: string
+    currency: string
+    price: number
+    is_active: boolean
+    created_at: string
+    updated_at: string
+  }
+  Insert: {
+    id?: string
+    course_id: string
+    region_code: string
+    label: string
+    currency?: string
+    price: number
+    is_active?: boolean
+    created_at?: string
+    updated_at?: string
+  }
+  Update: {
+    id?: string
+    course_id?: string
+    region_code?: string
+    label?: string
+    currency?: string
+    price?: number
+    is_active?: boolean
+    created_at?: string
+    updated_at?: string
+  }
+  Relationships: [
+    {
+      foreignKeyName: "course_price_tiers_course_id_fkey"
+      columns: ["course_id"]
+      isOneToOne: false
+      referencedRelation: "courses"
+      referencedColumns: ["id"]
+    },
+  ]
+}
+
+course_versions: {
+  Row: {
+    id: string
+    course_id: string
+    version_label: string
+    notes: string | null
+    created_by: string | null
+    created_at: string
+  }
+  Insert: {
+    id?: string
+    course_id: string
+    version_label: string
+    notes?: string | null
+    created_by?: string | null
+    created_at?: string
+  }
+  Update: {
+    id?: string
+    course_id?: string
+    version_label?: string
+    notes?: string | null
+    created_by?: string | null
+    created_at?: string
+  }
+  Relationships: [
+    {
+      foreignKeyName: "course_versions_course_id_fkey"
+      columns: ["course_id"]
+      isOneToOne: false
+      referencedRelation: "courses"
+      referencedColumns: ["id"]
+    },
+  ]
+}
+
+course_tutorials: {
+  Row: {
+    id: string
+    course_id: string
+    title: string
+    description: string | null
+    video_url: string | null
+    thumbnail_url: string | null
+    duration: number | null
+    position: number
+    is_active: boolean
+    created_at: string
+    updated_at: string
+  }
+  Insert: {
+    id?: string
+    course_id: string
+    title: string
+    description?: string | null
+    video_url?: string | null
+    thumbnail_url?: string | null
+    duration?: number | null
+    position?: number
+    is_active?: boolean
+    created_at?: string
+    updated_at?: string
+  }
+  Update: {
+    id?: string
+    course_id?: string
+    title?: string
+    description?: string | null
+    video_url?: string | null
+    thumbnail_url?: string | null
+    duration?: number | null
+    position?: number
+    is_active?: boolean
+    created_at?: string
+    updated_at?: string
+  }
+  Relationships: [
+    {
+      foreignKeyName: "course_tutorials_course_id_fkey"
+      columns: ["course_id"]
+      isOneToOne: false
+      referencedRelation: "courses"
+      referencedColumns: ["id"]
+    },
+  ]
+}
+
+student_certificates: {
+  Row: {
+    id: string
+    user_id: string
+    course_id: string
+    certification_id: string | null
+    certificate_url: string | null
+    score_percent: number | null
+    issued_at: string
+  }
+  Insert: {
+    id?: string
+    user_id: string
+    course_id: string
+    certification_id?: string | null
+    certificate_url?: string | null
+    score_percent?: number | null
+    issued_at?: string
+  }
+  Update: {
+    id?: string
+    user_id?: string
+    course_id?: string
+    certification_id?: string | null
+    certificate_url?: string | null
+    score_percent?: number | null
+    issued_at?: string
+  }
+  Relationships: [
+    {
+      foreignKeyName: "student_certificates_course_id_fkey"
+      columns: ["course_id"]
+      isOneToOne: false
+      referencedRelation: "courses"
+      referencedColumns: ["id"]
+    },
+    {
+      foreignKeyName: "student_certificates_certification_id_fkey"
+      columns: ["certification_id"]
+      isOneToOne: false
+      referencedRelation: "course_certifications"
+      referencedColumns: ["id"]
+    },
+  ]
+}
+
+forum_threads: {
+  Row: {
+    id: string
+    course_id: string
+    user_id: string
+    title: string
+    body: string | null
+    is_pinned: boolean
+    is_locked: boolean
+    created_at: string
+    updated_at: string
+  }
+  Insert: {
+    id?: string
+    course_id: string
+    user_id: string
+    title: string
+    body?: string | null
+    is_pinned?: boolean
+    is_locked?: boolean
+    created_at?: string
+    updated_at?: string
+  }
+  Update: {
+    id?: string
+    course_id?: string
+    user_id?: string
+    title?: string
+    body?: string | null
+    is_pinned?: boolean
+    is_locked?: boolean
+    created_at?: string
+    updated_at?: string
+  }
+  Relationships: [
+    {
+      foreignKeyName: "forum_threads_course_id_fkey"
+      columns: ["course_id"]
+      isOneToOne: false
+      referencedRelation: "courses"
+      referencedColumns: ["id"]
+    },
+  ]
+}
+
+forum_replies: {
+  Row: {
+    id: string
+    thread_id: string
+    user_id: string
+    body: string
+    created_at: string
+  }
+  Insert: {
+    id?: string
+    thread_id: string
+    user_id: string
+    body: string
+    created_at?: string
+  }
+  Update: {
+    id?: string
+    thread_id?: string
+    user_id?: string
+    body?: string
+    created_at?: string
+  }
+  Relationships: [
+    {
+      foreignKeyName: "forum_replies_thread_id_fkey"
+      columns: ["thread_id"]
+      isOneToOne: false
+      referencedRelation: "forum_threads"
+      referencedColumns: ["id"]
+    },
+  ]
+}
+
+course_landing_pages: {
+  Row: {
+    course_id: string
+    headline: string | null
+    subheadline: string | null
+    hero_image_url: string | null
+    video_url: string | null
+    highlights: string[] | null
+    faq: Json | null
+    is_published: boolean
+    updated_at: string
+    updated_by: string | null
+  }
+  Insert: {
+    course_id: string
+    headline?: string | null
+    subheadline?: string | null
+    hero_image_url?: string | null
+    video_url?: string | null
+    highlights?: string[] | null
+    faq?: Json | null
+    is_published?: boolean
+    updated_at?: string
+    updated_by?: string | null
+  }
+  Update: {
+    course_id?: string
+    headline?: string | null
+    subheadline?: string | null
+    hero_image_url?: string | null
+    video_url?: string | null
+    highlights?: string[] | null
+    faq?: Json | null
+    is_published?: boolean
+    updated_at?: string
+    updated_by?: string | null
+  }
+  Relationships: [
+    {
+      foreignKeyName: "course_landing_pages_course_id_fkey"
+      columns: ["course_id"]
+      isOneToOne: true
+      referencedRelation: "courses"
+      referencedColumns: ["id"]
+    },
+  ]
+}
+
+platform_settings: {
+  Row: {
+    key: string
+    value: Json
+    updated_at: string
+    updated_by: string | null
+  }
+  Insert: {
+    key: string
+    value?: Json
+    updated_at?: string
+    updated_by?: string | null
+  }
+  Update: {
+    key?: string
+    value?: Json
+    updated_at?: string
+    updated_by?: string | null
+  }
+  Relationships: []
+}
+
       commissions: {
         Row: {
           affiliate_id: string
@@ -1101,6 +1427,9 @@ export type Database = {
           title: string
           updated_at: string
           what_you_learn: string[] | null
+          purchase_type: string  
+          subscription_interval: string | null
+          drip_enabled: boolean 
         }
         Insert: {
           category_id?: string | null
@@ -1121,6 +1450,9 @@ export type Database = {
           title: string
           updated_at?: string
           what_you_learn?: string[] | null
+          purchase_type?: string
+          subscription_interval?: string | null
+          drip_enabled?: boolean
         }
         Update: {
           category_id?: string | null
@@ -1141,6 +1473,9 @@ export type Database = {
           title?: string
           updated_at?: string
           what_you_learn?: string[] | null
+          purchase_type?: string
+          subscription_interval?: string | null
+          drip_enabled?: boolean
         }
         Relationships: [
           {
@@ -1209,6 +1544,8 @@ export type Database = {
           section_id: string
           title: string
           video_url: string | null
+          drip_days: number  
+          release_at: string | null 
         }
         Insert: {
           created_at?: string
@@ -1220,6 +1557,8 @@ export type Database = {
           section_id: string
           title: string
           video_url?: string | null
+          drip_days?: number
+           release_at?: string | null
         }
         Update: {
           created_at?: string
@@ -1231,6 +1570,8 @@ export type Database = {
           section_id?: string
           title?: string
           video_url?: string | null
+          drip_days?: number
+           release_at?: string | null
         }
         Relationships: [
           {
@@ -1305,6 +1646,7 @@ export type Database = {
           key_id?: string
           razorpay_order_id?: string
           user_id?: string
+          
         }
         Relationships: []
       }
@@ -1319,6 +1661,7 @@ export type Database = {
           updated_at: string
           user_id: string
           website: string | null
+          country: string | null 
         }
         Insert: {
           avatar_url?: string | null
@@ -1330,6 +1673,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           website?: string | null
+          country?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1341,6 +1685,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           website?: string | null
+          country?: string | null
         }
         Relationships: []
       }
@@ -1428,6 +1773,9 @@ export type Database = {
           status: string | null
           stripe_payment_id: string | null
           user_id: string
+          refunded_at: string | null   
+          refund_amount: number | null 
+          refund_reason: string | null  
         }
         Insert: {
           amount: number
@@ -1438,6 +1786,9 @@ export type Database = {
           status?: string | null
           stripe_payment_id?: string | null
           user_id: string
+          refunded_at?: string | null
+          refund_amount?: number | null
+          refund_reason?: string | null
         }
         Update: {
           amount?: number
@@ -1448,6 +1799,9 @@ export type Database = {
           status?: string | null
           stripe_payment_id?: string | null
           user_id?: string
+          refunded_at?: string | null
+          refund_amount?: number | null
+          refund_reason?: string | null
         }
         Relationships: [
           {
@@ -1804,7 +2158,7 @@ export type Database = {
     }
     Enums: {
       affiliate_status: "pending" | "approved" | "rejected" | "suspended"
-      app_role: "student" | "instructor" | "admin" | "super_admin" | "affiliate"
+      app_role: "student" | "instructor" | "admin" | "super_admin" | "affiliate" | "support"
       commission_state:
         | "pending"
         | "approved"
@@ -1947,7 +2301,7 @@ export const Constants = {
   public: {
     Enums: {
       affiliate_status: ["pending", "approved", "rejected", "suspended"],
-      app_role: ["student", "instructor", "admin", "super_admin", "affiliate"],
+      app_role: ["student", "instructor", "admin", "super_admin", "affiliate", "support"],
       commission_state: ["pending", "approved", "paid", "rejected", "reversed"],
       payout_method: ["bank", "upi", "paypal", "stripe"],
       withdrawal_state: [

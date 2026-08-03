@@ -34,7 +34,7 @@ const queryClient = new QueryClient();
 
 function AppLayout() {
   const location = useLocation();
-   const hideNavbar = location.pathname.startsWith("/learn/") || location.pathname.startsWith("/ref/");
+    const hideNavbar = location.pathname.startsWith("/learn/") || location.pathname.startsWith("/ref/") || location.pathname === "/admin";
 
   return (
     <>
