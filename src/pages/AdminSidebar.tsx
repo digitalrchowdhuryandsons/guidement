@@ -1,5 +1,6 @@
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, LucideIcon } from "lucide-react";
+import { Link} from "react-router-dom";
 
 export type NavItem = {
   value: string;
@@ -46,12 +47,12 @@ export default function AdminSidebar({
       }`}
     >
       <div className="flex items-center gap-3 px-5 py-6">
-        <div className="h-8 w-8 shrink-0 rounded-lg bg-gradient-to-br from-[#4d9e81] to-[#d4a24c]" />
+        
         {!collapsed && (
           <div className="leading-tight">
-            <p className="font-display text-base font-bold">
-              Guidement
-            </p>
+            <Link to="/" className="flex items-center gap-2">
+                 <img src="/logo1.png" alt="GuideMent" className="h-20 w-auto" />
+                </Link>
             <p className="text-xs uppercase tracking-wide text-[#8ea3c9]">Admin Console</p>
           </div>
         )}
