@@ -469,7 +469,7 @@ export default function AdminDashboard() {
             <TabsContent value="overview" className="m-0 space-y-7">
               <section>
                 <h1 className="font-display text-2xl font-bold">Welcome back, {displayName}</h1>
-                <p className="text-sm text-slate-500">Here's how DigiDominance Academy is performing today — {new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</p>
+                <p className="text-sm text-slate-500">Here's how Guidement is performing today — {new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</p>
               </section>
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

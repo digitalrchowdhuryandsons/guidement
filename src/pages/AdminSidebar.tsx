@@ -50,9 +50,7 @@ export default function AdminSidebar({
         {!collapsed && (
           <div className="leading-tight">
             <p className="font-display text-base font-bold">
-              DigiDominance
-              <br />
-              Academy
+              Guidement
             </p>
             <p className="text-xs uppercase tracking-wide text-[#8ea3c9]">Admin Console</p>
           </div>
