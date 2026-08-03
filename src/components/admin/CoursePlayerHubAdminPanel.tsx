@@ -102,6 +102,11 @@ export default function CoursePlayerHubAdminPanel() {
     queryKey: ["admin-course-player-hub", activeKind, selectedCourseId],
     queryFn: async () => {
       if (!selectedCourseId) return [];
+      if (activeKind === "tutorials") {
+        const { data, error } = await (supabase as any).from("course_tutorials").select("*").eq("course_id", selectedCourseId).order("position");
+        if (error) throw error;
+        return (data || []) as HubItem[];
+      }
       if (activeKind === "workshops") {
         const { data, error } = await supabase.from("course_workshops").select("*").eq("course_id", selectedCourseId).order("starts_at").order("position");
         if (error) throw error;
@@ -169,6 +174,10 @@ export default function CoursePlayerHubAdminPanel() {
           is_active: form.isActive,
           updated_at: new Date().toISOString(),
         };
+        const result = form.id
+          ? await (supabase as any).from("course_tutorials").update(payload).eq("id", form.id)
+          : await (supabase as any).from("course_tutorials").insert(payload);
+        if (result.error) throw result.error;
         return;
       }
 
@@ -261,6 +270,11 @@ export default function CoursePlayerHubAdminPanel() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (activeKind === "tutorials") {
+        const { error } = await (supabase as any).from("course_tutorials").delete().eq("id", id);
+        if (error) throw error;
+        return;
+      }
       if (activeKind === "workshops") {
         const { error } = await supabase.from("course_workshops").delete().eq("id", id);
         if (error) throw error;
