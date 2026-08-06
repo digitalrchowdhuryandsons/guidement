@@ -363,6 +363,7 @@ export default function AdminDashboard() {
         { value: "overview", label: "Dashboard", icon: LayoutDashboard },
         { value: "all-courses", label: "Courses", icon: BookOpen, badge: pendingCourses?.length || undefined },
         { value: "users", label: "Students", icon: Users2 },
+        { value: "partners", label: "Partners", icon: Users2 },
         { value: "payments", label: "Payments & Pricing", icon: CreditCard },
       ],
     },
