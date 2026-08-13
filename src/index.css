@@ -111,6 +111,15 @@
     @apply border-border;
   }
 
+  /* Stops scroll bounce/rubber-banding (Chrome/Firefox) from momentarily
+     revealing the real <body> background — which is white per --background
+     above — at the top/bottom edges of a scrollable page. Admin pages that
+     hardcode their own dark colors instead of toggling the .dark class were
+     showing a flash of that white body underneath during overscroll. */
+  html, body {
+    overscroll-behavior-y: none;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;

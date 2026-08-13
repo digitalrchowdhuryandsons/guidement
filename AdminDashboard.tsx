@@ -9,11 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import {
   Search, Bell, Settings, Plus, BookOpen, CheckCircle, XCircle, GraduationCap, Clock,
-  LayoutDashboard, Users2, MessagesSquare, Wallet, Landmark, Grid3x3, Blocks, Handshake,
+  LayoutDashboard, Users2, MessagesSquare, Wallet, Landmark, Grid3x3, Blocks,
 } from "lucide-react";
 import { toast } from "sonner";
-import AdminSidebarFlyout, { FlyoutGroup } from "@/components/admin/AdminSidebarFlyout";
-import DashboardOverviewV2 from "@/components/admin/DashboardOverviewV2";
+import AdminSidebarFlyout, { FlyoutGroup } from "./AdminSidebarFlyout";
+import DashboardOverviewV2 from "./DashboardOverviewV2";
 import PurchaseAttemptsPanel from "@/components/admin/PurchaseAttemptsPanel";
 import PaymentRetriesPanel from "@/components/admin/PaymentRetriesPanel";
 import CoursePlayerHubAdminPanel from "@/components/admin/CoursePlayerHubAdminPanel";
@@ -22,7 +22,7 @@ import UsersManagement from "@/components/admin/UsersManagement";
 import SiteContentEditor from "@/components/admin/SiteContentEditor";
 import CouponsManagement from "@/components/admin/CouponsManagement";
 import CouponRedemptions from "@/components/admin/CouponRedemptions";
-import RevenueAnalyticsPanel from "@/components/admin/ReveneuAnalyticsPanel";
+import RevenueAnalyticsPanel from "@/components/admin/RevenueAnalyticsPanel";
 import StudentProgressPanel from "@/components/admin/StudentProgressPanel";
 import AffiliatesManagement from "@/components/admin/AffiliatesManagement";
 import ReferralLogsPanel from "@/components/admin/ReferralLogsPanel";
@@ -133,13 +133,6 @@ export default function AdminDashboard() {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  // Signs the current admin out and returns them to the public site.
-  // Swap this for your AuthContext's signOut() if it exposes one.
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) toast.error(error.message);
-  };
-
   if (loading) return null;
   if (!user || !hasRole("admin")) return <Navigate to="/dashboard" />;
 
@@ -151,8 +144,6 @@ export default function AdminDashboard() {
   // Flyout nav groups. "Academy", "Apps", and "Elements" submenus were never
   // shown in the reference screenshots, so they route to Settings for now
   // rather than guessing fake destinations — see chat for what to fill in.
-  // "Partners" currently routes to a placeholder tab until a dedicated
-  // PartnersManagement panel exists.
   // ---------------------------------------------------------------------------
   const navGroups: FlyoutGroup[] = [
     { key: "dashboard", icon: LayoutDashboard, label: "Dashboard", items: [{ value: "overview", label: "Dashboard" }] },
@@ -195,7 +186,7 @@ export default function AdminDashboard() {
         { value: "instructor-directory", label: "Performance" },
       ],
     },
- 
+    { key: "academy", icon: Grid3x3, label: "Academ", items: [{ value: "settings", label: "Academy Settings" }] },
     {
       key: "communication", icon: MessagesSquare, label: "Commun",
       items: [
@@ -220,13 +211,8 @@ export default function AdminDashboard() {
         { value: "reports", label: "Reports" },
       ],
     },
-    {
-      key: "partners", icon: Handshake, label: "Partners",
-      items: [
-        { value: "partners", label: "All Partners" },
-        { value: "partners", label: "Partner Agreements" },
-      ],
-    },
+    { key: "apps", icon: Blocks, label: "Apps", items: [{ value: "settings", label: "App Settings" }] },
+    { key: "elements", icon: Landmark, label: "Elemen", items: [{ value: "settings", label: "Design Elements" }] },
   ];
 
   const activeGroupKey = useMemo(() => navGroups.find((g) => g.items.some((i) => i.value === activeTab))?.key || "dashboard", [activeTab, navGroups]);
@@ -239,7 +225,6 @@ export default function AdminDashboard() {
   const certificateCapabilities = ["Build quizzes and assignments with auto-grading rules", "Design certificate templates and auto-issue on completion", "Review learner progress and assessment completion reports"];
   const analyticsCapabilities = ["Analyze cohort-level completion funnels", "Report revenue by course, region, and pricing tier", "Find lesson-level drop-off points inside courses"];
   const settingsCapabilities = ["Manage admin, instructor, and support roles", "Update branding, logo, domain, and email templates", "Configure payment gateway, email, analytics, and CRM integrations"];
-  const partnersCapabilities = ["Track partner organizations and their point of contact", "Manage revenue-share and referral agreement terms", "Review joint marketing and co-branded course activity"];
 
   const capabilityCard = (title: string, description: string, items: string[]) => (
     <Card className="rounded-2xl border-slate-200 bg-white shadow-none">
@@ -257,31 +242,37 @@ export default function AdminDashboard() {
     </Card>
   );
 
-
+  const teamSettingsPanel = (
+    <div className="space-y-5">
+      {capabilityCard("Settings & Team", "Manage roles, branding, and third-party integrations for the academy console.", settingsCapabilities)}
+      <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+        <UsersManagement />
+        <div className="space-y-5">
+          <BrandingSettingsPanel />
+          <IntegrationsStatusPanel />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#f7f7f5] text-slate-950">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex min-h-screen">
-        <AdminSidebarFlyout
-          groups={navGroups}
-          activeGroupKey={activeGroupKey}
-          onNavigate={setActiveTab}
-          profileName={displayName}
-          onProfileClick={() => setActiveTab("settings")}
-          onLogout={handleLogout}
-        />
+        <AdminSidebarFlyout groups={navGroups} activeGroupKey={activeGroupKey} onNavigate={setActiveTab} />
 
-        <main className="w-full lg:pl-[76px] ">
+        <main className="w-full lg:pl-[76px]">
           <header className="sticky top-0 z-20 flex h-[75px] items-center justify-between border-b border-white/5 bg-[#1c162f] px-6 lg:px-9">
             <div className="flex items-center gap-3">
-              <span className="font-display text-lg font-bold text-white">Admin Panel</span>
+              <span className="font-display text-lg font-bold text-white">Acadx <span className="ml-1 text-xs font-normal uppercase tracking-widest text-[#8b8aa3]">Academy Suite</span></span>
             </div>
             <div className="relative hidden w-full max-w-sm md:block">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8b8aa3]" />
               <input className="h-9 w-full rounded-full border border-white/10 bg-[#2e1b46] pl-10 pr-4 text-sm text-white outline-none placeholder:text-[#8b8aa3]" placeholder="Search courses, students, lessons..." />
             </div>
             <div className="flex items-center gap-3">
-          
+              <button className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-[#2e1b46] text-white" onClick={() => setActiveTab("settings")}>
+                <Settings className="h-4 w-4" />
+              </button>
               <button className="relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-[#2e1b46] text-white" onClick={() => setActiveTab("notifications")}>
                 <Bell className="h-4 w-4" />
                 {unreadNotifCount > 0 && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-[#ec4899] ring-2 ring-[#1c162f]" />}
@@ -297,7 +288,7 @@ export default function AdminDashboard() {
           </header>
 
           <div className="space-y-7 p-6 lg:p-9">
-            <TabsContent value="overview" className="m-0 -mx-6 -mt-9 min-h-screen bg-[#14101f] p-6 lg:-mx-9 lg:p-9"><DashboardOverviewV2 onNavigate={setActiveTab} /></TabsContent>
+            <TabsContent value="overview" className="m-0 -mx-6 -mt-7 min-h-screen bg-[#14101f] p-6 lg:-mx-9 lg:p-9"><DashboardOverviewV2 onNavigate={setActiveTab} /></TabsContent>
 
             <TabsContent value="courses" className="m-0"><Card className="border-0"><CardHeader><CardTitle className="font-display flex items-center gap-2"><BookOpen className="h-5 w-5 text-primary" />Pending Course Approvals</CardTitle></CardHeader><CardContent>{pendingCourses && pendingCourses.length > 0 ? <div className="space-y-3">{pendingCourses.map((course: PendingCourse) => <div key={course.id} className="flex items-center gap-4 rounded-lg bg-secondary/30 p-4"><div className="flex-1"><p className="font-medium">{course.title}</p><p className="text-sm text-muted-foreground">by {course.profiles?.full_name}</p></div><Button size="sm" onClick={() => approveCourse(course.id)}><CheckCircle className="mr-1 h-4 w-4" /> Approve</Button></div>)}</div> : <p className="py-8 text-center text-muted-foreground">No pending course approvals</p>}</CardContent></Card></TabsContent>
             <TabsContent value="instructors" className="m-0"><Card className="border-0"><CardHeader><CardTitle className="font-display flex items-center gap-2"><GraduationCap className="h-5 w-5 text-primary" />Instructor Applications</CardTitle></CardHeader><CardContent>{instructorApps && instructorApps.length > 0 ? <div className="space-y-4">{instructorApps.map((app: InstructorApplication) => <div key={app.id} className="space-y-3 rounded-lg bg-secondary/30 p-4"><div className="flex items-start justify-between"><div><p className="font-display font-semibold">{app.profiles?.full_name || "Unknown User"}</p><p className="text-sm text-muted-foreground">Applied {new Date(app.created_at).toLocaleDateString()}</p></div><Badge variant={app.status === "approved" ? "default" : app.status === "rejected" ? "destructive" : "secondary"}>{app.status === "pending" && <Clock className="mr-1 h-3 w-3" />}{app.status === "approved" && <CheckCircle className="mr-1 h-3 w-3" />}{app.status === "rejected" && <XCircle className="mr-1 h-3 w-3" />}{app.status}</Badge></div><div className="grid gap-3 text-sm sm:grid-cols-2"><div><p className="font-medium text-muted-foreground">Expertise</p><p>{app.expertise}</p></div><div><p className="font-medium text-muted-foreground">Experience</p><p>{app.experience}</p></div></div><div className="text-sm"><p className="font-medium text-muted-foreground">Bio</p><p>{app.bio}</p></div>{app.status === "pending" && <div className="flex gap-2 pt-2"><Button size="sm" onClick={() => handleApplication.mutate({ appId: app.id, userId: app.user_id, action: "approved" })} disabled={handleApplication.isPending}><CheckCircle className="mr-1 h-4 w-4" /> Approve</Button><Button size="sm" variant="destructive" onClick={() => handleApplication.mutate({ appId: app.id, userId: app.user_id, action: "rejected" })} disabled={handleApplication.isPending}><XCircle className="mr-1 h-4 w-4" /> Reject</Button></div>}</div>)}</div> : <p className="py-8 text-center text-muted-foreground">No instructor applications</p>}</CardContent></Card></TabsContent>
@@ -324,13 +315,12 @@ export default function AdminDashboard() {
             <TabsContent value="marketing" className="m-0 space-y-5">{capabilityCard("Marketing & Growth", "Landing pages, automation sequences, affiliate/referral operations, and UTM reporting.", marketingCapabilities)}<CourseLandingPageEditor /><CampaignPerformancePanel /><CampaignManagerPanel /><AffiliatesManagement /><ReferralLogsPanel /><PayoutQueuePanel /><FraudCenterPanel /></TabsContent>
             <TabsContent value="analytics" className="m-0 space-y-5">{capabilityCard("Analytics & Reporting", "Cohort funnels, revenue slices, and course drop-off analysis.", analyticsCapabilities)}<CourseDropoffPanel /><RevenueAnalyticsPanel /><StudentProgressPanel /></TabsContent>
             <TabsContent value="notifications" className="m-0"><NotificationsPanel /></TabsContent>
+            <TabsContent value="settings" className="m-0">{teamSettingsPanel}</TabsContent>
             <TabsContent value="revenue" className="m-0"><RevenueAnalyticsPanel /></TabsContent>
             <TabsContent value="progress" className="m-0"><StudentProgressPanel /></TabsContent>
-            <TabsContent value="partners" className="m-0 space-y-5">{capabilityCard("Partners", "Partner organizations, agreements, and revenue-share terms — hook this up to a PartnersManagement panel once it exists.", partnersCapabilities)}</TabsContent>
           </div>
         </main>
       </Tabs>
-      <p className="relative bottom-2 left-0 right-0 text-center text-xs text-muted-foreground ">GuideMent Admin Panel v1.0.0</p>
     </div>
   );
 }
