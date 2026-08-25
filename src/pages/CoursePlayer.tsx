@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 import {
   ChevronLeft,
@@ -45,6 +46,8 @@ import {
   Volume2,
   Captions,
   Cog,
+  Radio,
+  Video,
 } from "lucide-react";
 import { generateCertificate } from "@/lib/generateCertificate";
 import {
@@ -117,6 +120,8 @@ interface CourseWorkshop {
   meeting_url: string | null;
   recording_url: string | null;
   status: string;
+  host_name?: string | null;
+  agenda?: string[] | null;
 }
 
 interface CourseCertification {
@@ -143,6 +148,16 @@ interface CourseCommunity {
   description: string | null;
   platform: string | null;
   community_url: string | null;
+  whatsapp_url?: string | null;
+  faq?: { question: string; answer: string }[] | null;
+}
+
+interface CourseCommunityMessage {
+  id: string;
+  message: string;
+  created_at: string;
+  user_id: string;
+  profiles?: { full_name: string | null; avatar_url?: string | null } | null;
 }
 
 interface CoursePlayerNote {
@@ -183,6 +198,7 @@ export default function CoursePlayer() {
   const [aiChatPrompt, setAiChatPrompt] = useState("");
   const [lessonDrawerOpen, setLessonDrawerOpen] = useState(false);
   const [notesCollapsed, setNotesCollapsed] = useState(false);
+  const [communityMessage, setCommunityMessage] = useState("");
 
   // Fetch course by slug
   const { data: course, isLoading: courseLoading } = useQuery({
@@ -423,14 +439,23 @@ export default function CoursePlayer() {
       const { data, error } = await supabase
         .from("course_workshops")
         .select(
-          "id,title,description,starts_at,ends_at,meeting_url,recording_url,status"
+          "id,title,description,starts_at,ends_at,meeting_url,recording_url,status,host_name,agenda"
         )
         .eq("course_id", course!.id)
         .eq("is_active", true)
         .order("starts_at", { ascending: true })
         .order("position");
       if (error) throw error;
-      return (data || []) as CourseWorkshop[];
+      const signedWorkshops = await Promise.all(
+        (data || []).map(async (workshop) => {
+          if (!workshop.recording_url || /^https?:\/\//i.test(workshop.recording_url)) return workshop;
+          const { data: signed } = await supabase.storage
+            .from("course-materials")
+            .createSignedUrl(workshop.recording_url, 60 * 60);
+          return { ...workshop, recording_url: signed?.signedUrl || workshop.recording_url };
+        })
+      );
+      return signedWorkshops as CourseWorkshop[];
     },
     enabled: canFetchPremiumHubData,
   });
@@ -473,7 +498,7 @@ export default function CoursePlayer() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("course_communities")
-        .select("id,title,description,platform,community_url")
+        .select("id,title,description,platform,community_url,whatsapp_url,faq")
         .eq("course_id", course!.id)
         .eq("is_active", true)
         .order("position");
@@ -481,6 +506,43 @@ export default function CoursePlayer() {
       return (data || []) as CourseCommunity[];
     },
     enabled: canFetchPremiumHubData,
+  });
+
+
+
+  const { data: communityMessages = [] } = useQuery({
+    queryKey: ["player-course-community-messages", course?.id, user?.id],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("course_community_messages")
+        .select("id,message,created_at,user_id,profiles!course_community_messages_user_id_fkey(full_name,avatar_url)")
+        .eq("course_id", course!.id)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (error) throw error;
+      return (data || []) as CourseCommunityMessage[];
+    },
+    enabled: canFetchPremiumHubData,
+  });
+
+  const sendCommunityMessageMutation = useMutation({
+    mutationFn: async () => {
+      if (!course || !user || !communityMessage.trim()) return;
+      const { error } = await (supabase as any)
+        .from("course_community_messages")
+        .insert({
+          course_id: course.id,
+          user_id: user.id,
+          message: communityMessage.trim(),
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setCommunityMessage("");
+      queryClient.invalidateQueries({ queryKey: ["player-course-community-messages"] });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Could not send message"),
   });
 
   // All lectures flat
@@ -1179,53 +1241,51 @@ export default function CoursePlayer() {
       if (!hasAccess) return lockedHubState("Workshops");
       return (
         <div className="rounded-xl border bg-white p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <Briefcase className="h-4 w-4 text-violet-600" />
-            <h2 className="font-display text-lg font-bold">Workshops</h2>
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4 text-violet-600" />
+              <div>
+                <h2 className="font-display text-lg font-bold">Live Zoom workshops & recordings</h2>
+                <p className="text-sm text-muted-foreground">Join the Zoom session shared by the admin or replay uploaded workshop recordings.</p>
+              </div>
+            </div>
+            <Badge variant="secondary">{courseWorkshops.length} sessions</Badge>
           </div>
           {courseWorkshops.length > 0 ? (
-            <div className="space-y-3">
-              {courseWorkshops.map((workshop) => (
-                <div key={workshop.id} className="rounded-lg border p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold">{workshop.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDateTime(workshop.starts_at)} ·{" "}
-                        {workshop.status}
-                      </p>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {courseWorkshops.map((workshop) => {
+                const isLive = workshop.status?.toLowerCase() === "live";
+                const isRecorded = !!workshop.recording_url && !workshop.meeting_url;
+                return (
+                  <div key={workshop.id} className="rounded-2xl border bg-gradient-to-br from-violet-50 to-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <Badge className={isLive ? "bg-red-600 text-white" : "bg-violet-600 text-white"}>
+                          {isLive ? <Radio className="mr-1 h-3 w-3" /> : <Video className="mr-1 h-3 w-3" />}
+                          {isRecorded ? "Recorded" : workshop.status}
+                        </Badge>
+                        <p className="mt-2 font-semibold">{workshop.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDateTime(workshop.starts_at)}
+                          {workshop.host_name ? ` · Hosted by ${workshop.host_name}` : ""}
+                        </p>
+                      </div>
                     </div>
-                    <Badge variant="secondary">{workshop.status}</Badge>
-                  </div>
-                  {workshop.description && (
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {workshop.description}
-                    </p>
-                  )}
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {workshop.meeting_url && (
-                      <a
-                        href={workshop.meeting_url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <Button size="sm">Join workshop</Button>
-                      </a>
+                    {workshop.description && <p className="mt-3 text-sm text-muted-foreground">{workshop.description}</p>}
+                    {workshop.agenda && workshop.agenda.length > 0 && (
+                      <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
+                        {workshop.agenda.map((item) => (
+                          <li key={item} className="flex gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 text-violet-600" />{item}</li>
+                        ))}
+                      </ul>
                     )}
-                    {workshop.recording_url && (
-                      <a
-                        href={workshop.recording_url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <Button size="sm" variant="outline">
-                          Recording
-                        </Button>
-                      </a>
-                    )}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {workshop.meeting_url && <a href={workshop.meeting_url} target="_blank" rel="noreferrer"><Button size="sm">Join Zoom workshop</Button></a>}
+                      {workshop.recording_url && <a href={workshop.recording_url} target="_blank" rel="noreferrer"><Button size="sm" variant="outline">Watch recording</Button></a>}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             emptyHubState("Workshops")
@@ -1392,42 +1452,71 @@ export default function CoursePlayer() {
 
     if (activeHubTab === "community") {
       if (!hasAccess) return lockedHubState("Community");
+      const faqs = courseCommunities.flatMap((community) => community.faq || []);
       return (
-        <div className="rounded-xl border bg-white p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <Users className="h-4 w-4 text-violet-600" />
-            <h2 className="font-display text-lg font-bold">Community</h2>
-          </div>
-          {courseCommunities.length > 0 ? (
-            <div className="grid gap-3 md:grid-cols-2">
-              {courseCommunities.map((community) => (
-                <div key={community.id} className="rounded-lg border p-3">
-                  <p className="font-semibold">{community.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {community.platform || "Community"}
-                  </p>
-                  {community.description && (
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {community.description}
-                    </p>
-                  )}
-                  {community.community_url && (
-                    <a
-                      href={community.community_url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <Button className="mt-3" size="sm">
-                        Join community
-                      </Button>
-                    </a>
-                  )}
-                </div>
-              ))}
+        <div className="space-y-4">
+          <div className="rounded-xl border bg-white p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Users className="h-4 w-4 text-violet-600" />
+              <div>
+                <h2 className="font-display text-lg font-bold">Course community</h2>
+                <p className="text-sm text-muted-foreground">Use the in-app course community for member chat and FAQs, then join the WhatsApp group shared by the admin.</p>
+              </div>
             </div>
-          ) : (
-            emptyHubState("Community links")
-          )}
+            {courseCommunities.length > 0 ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                {courseCommunities.map((community) => (
+                  <div key={community.id} className="rounded-lg border p-3">
+                    <p className="font-semibold">{community.title}</p>
+                    <p className="text-xs text-muted-foreground">{community.platform || "In-app community"}</p>
+                    {community.description && <p className="mt-2 text-sm text-muted-foreground">{community.description}</p>}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {community.community_url && <a href={community.community_url} target="_blank" rel="noreferrer"><Button size="sm" variant="outline">Open in-app community</Button></a>}
+                      {community.whatsapp_url && <a href={community.whatsapp_url} target="_blank" rel="noreferrer"><Button size="sm" className="bg-green-600 hover:bg-green-700">Join WhatsApp</Button></a>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : emptyHubState("Community links")}
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+            <div className="rounded-xl border bg-white p-4">
+              <h3 className="mb-3 font-semibold">Frequently asked questions</h3>
+              {faqs.length > 0 ? (
+                <Accordion type="single" collapsible className="w-full">
+                  {faqs.map((faq, index) => (
+                    <AccordionItem key={`${faq.question}-${index}`} value={`faq-${index}`}>
+                      <AccordionTrigger className="text-left text-sm">{faq.question}</AccordionTrigger>
+                      <AccordionContent className="text-sm text-muted-foreground">{faq.answer}</AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              ) : emptyHubState("FAQs")}
+            </div>
+
+            <div className="rounded-xl border bg-white p-4">
+              <h3 className="font-semibold">Member chat</h3>
+              <p className="text-sm text-muted-foreground">Messages are visible to enrolled learners and the instructor.</p>
+              <div className="mt-3 space-y-2">
+                <Textarea value={communityMessage} onChange={(event) => setCommunityMessage(event.target.value)} placeholder="Share a question or update with the community..." />
+                <Button onClick={() => sendCommunityMessageMutation.mutate()} disabled={!communityMessage.trim() || sendCommunityMessageMutation.isPending}>
+                  <Send className="mr-2 h-4 w-4" /> Send message
+                </Button>
+              </div>
+              <div className="mt-4 max-h-80 space-y-3 overflow-y-auto pr-1">
+                {communityMessages.length > 0 ? communityMessages.map((message) => (
+                  <div key={message.id} className="rounded-lg border bg-secondary/30 p-3">
+                    <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">{message.profiles?.full_name || (message.user_id === user?.id ? "You" : "Community member")}</span>
+                      <span>{formatDateTime(message.created_at)}</span>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm">{message.message}</p>
+                  </div>
+                )) : emptyHubState("Community messages")}
+              </div>
+            </div>
+          </div>
         </div>
       );
     }

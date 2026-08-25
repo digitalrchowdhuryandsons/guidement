@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, FilePenLine, GraduationCap, Trash2, Users, Video } from "lucide-react";
+import { CalendarDays, FilePenLine, GraduationCap, HelpCircle, Link2, MessageCircle, Trash2, Upload, Users, Video } from "lucide-react";
 import { toast } from "sonner";
+import { uploadLectureVideo } from "@/lib/uploadLectureVideo";
 
 type HubKind = "tutorials" | "workshops" | "certifications" | "events" | "communities";
 
@@ -18,7 +19,7 @@ type HubItem = {
   title: string;
   description: string | null;
   is_active?: boolean;
-  [key: string]: string | number | boolean | null | undefined;
+  [key: string]: unknown;
 };
 
 type CourseOption = {
@@ -36,6 +37,10 @@ type HubForm = {
   endsAt: string;
   location: string;
   platform: string;
+  whatsappUrl: string;
+  hostName: string;
+  agenda: string;
+  faq: string;
   status: string;
   passingScore: string;
   duration: string;
@@ -53,6 +58,10 @@ const emptyForm: HubForm = {
   endsAt: "",
   location: "",
   platform: "",
+  whatsappUrl: "",
+  hostName: "",
+  agenda: "",
+  faq: "",
   status: "scheduled",
   passingScore: "80",
   duration: "0",
@@ -62,10 +71,10 @@ const emptyForm: HubForm = {
 
 const hubMeta: Record<HubKind, { label: string; icon: typeof Video; helper: string }> = {
   tutorials: { label: "Tutorials", icon: Video, helper: "Create supplemental videos or lesson-linked tutorials." },
-  workshops: { label: "Workshops", icon: FilePenLine, helper: "Schedule live sessions and attach recordings." },
+  workshops: { label: "Zoom Workshops", icon: FilePenLine, helper: "Schedule Zoom sessions, share the Zoom join link, and attach recordings." },
   certifications: { label: "Certifications", icon: GraduationCap, helper: "Configure certificate cards and passing scores." },
   events: { label: "Events", icon: CalendarDays, helper: "Publish course events with dates, links, and locations." },
-  communities: { label: "Community", icon: Users, helper: "Add Discord, Slack, WhatsApp, or community links." },
+  communities: { label: "Course Community", icon: Users, helper: "Create the in-app course community and share the WhatsApp group link." },
 };
 
 const asNumber = (value: string, fallback: number) => {
@@ -75,12 +84,31 @@ const asNumber = (value: string, fallback: number) => {
 
 const toInputDateTime = (value?: string | null) => (value ? value.slice(0, 16) : "");
 const toIsoOrNull = (value: string) => (value ? new Date(value).toISOString() : null);
+const linesToArray = (value: string) => value.split("\n").map((item) => item.trim()).filter(Boolean);
+const parseFaq = (value: string) => {
+  if (!value.trim()) return [];
+  return value
+    .split("\n")
+    .map((line) => {
+      const [question, ...answerParts] = line.split("|");
+      return { question: question?.trim(), answer: answerParts.join("|").trim() };
+    })
+    .filter((item) => item.question && item.answer);
+};
+const stringifyFaq = (value: unknown) => {
+  if (!Array.isArray(value)) return "";
+  return value
+    .map((item: any) => `${item.question || ""} | ${item.answer || ""}`.trim())
+    .filter(Boolean)
+    .join("\n");
+};
 
 export default function CoursePlayerHubAdminPanel() {
   const queryClient = useQueryClient();
   const [activeKind, setActiveKind] = useState<HubKind>("tutorials");
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [form, setForm] = useState<HubForm>(emptyForm);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const { data: courses = [] } = useQuery({
     queryKey: ["admin-hub-courses"],
@@ -136,7 +164,10 @@ export default function CoursePlayerHubAdminPanel() {
     [courses, selectedCourseId]
   );
 
-  const resetForm = () => setForm(emptyForm);
+  const resetForm = () => {
+    setForm(emptyForm);
+    setUploadProgress(null);
+  };
 
   const editItem = (item: HubItem) => {
     setForm({
@@ -149,6 +180,10 @@ export default function CoursePlayerHubAdminPanel() {
       endsAt: toInputDateTime(String(item.ends_at || "")),
       location: String(item.location || ""),
       platform: String(item.platform || ""),
+      whatsappUrl: String(item.whatsapp_url || ""),
+      hostName: String(item.host_name || ""),
+      agenda: Array.isArray(item.agenda) ? item.agenda.join("\n") : "",
+      faq: stringifyFaq(item.faq),
       status: String(item.status || "scheduled"),
       passingScore: String(item.passing_score || 80),
       duration: String(item.duration || 0),
@@ -191,6 +226,8 @@ export default function CoursePlayerHubAdminPanel() {
           meeting_url: form.url || null,
           recording_url: form.secondaryUrl || null,
           status: form.status,
+          host_name: form.hostName || null,
+          agenda: linesToArray(form.agenda),
           position: asNumber(form.position, 0),
           is_active: form.isActive,
           updated_at: new Date().toISOString(),
@@ -246,6 +283,8 @@ export default function CoursePlayerHubAdminPanel() {
         description: form.description || null,
         platform: form.platform || null,
         community_url: form.url || null,
+        whatsapp_url: form.whatsappUrl || null,
+        faq: parseFaq(form.faq),
         position: asNumber(form.position, 0),
         is_active: form.isActive,
         updated_at: new Date().toISOString(),
@@ -267,6 +306,25 @@ export default function CoursePlayerHubAdminPanel() {
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Could not save hub item"),
   });
+
+
+
+  const handleWorkshopRecordingUpload = async (file: File) => {
+    if (!selectedCourseId) {
+      toast.error("Select a course before uploading a recording");
+      return;
+    }
+    try {
+      setUploadProgress(0);
+      const path = await uploadLectureVideo(file, `${selectedCourseId}/workshops`, setUploadProgress);
+      setForm((prev) => ({ ...prev, secondaryUrl: path, status: prev.status === "scheduled" ? "completed" : prev.status }));
+      toast.success("Workshop recording uploaded to Supabase Storage");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Recording upload failed");
+    } finally {
+      setTimeout(() => setUploadProgress(null), 1500);
+    }
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -341,6 +399,26 @@ export default function CoursePlayerHubAdminPanel() {
           </div>
         </div>
 
+        {(activeKind === "workshops" || activeKind === "communities") && (
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border bg-white p-4 shadow-sm">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-violet-100 text-violet-700"><Video className="h-4 w-4" /></div>
+              <p className="font-semibold">Learner-ready content</p>
+              <p className="text-sm text-muted-foreground">Every active record appears in the purchased learner's course player.</p>
+            </div>
+            <div className="rounded-xl border bg-white p-4 shadow-sm">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-green-100 text-green-700"><MessageCircle className="h-4 w-4" /></div>
+              <p className="font-semibold">Community channels</p>
+              <p className="text-sm text-muted-foreground">Create in-app course community cards and WhatsApp join links per course.</p>
+            </div>
+            <div className="rounded-xl border bg-white p-4 shadow-sm">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700"><HelpCircle className="h-4 w-4" /></div>
+              <p className="font-semibold">FAQs & recordings</p>
+              <p className="text-sm text-muted-foreground">Attach structured FAQs and upload Zoom workshop recordings to Supabase Storage.</p>
+            </div>
+          </div>
+        )}
+
         <div className="rounded-lg border bg-secondary/20 p-4">
           <p className="font-medium">{form.id ? "Edit" : "Create"} {activeMeta.label} item</p>
           <p className="mb-4 text-sm text-muted-foreground">{activeMeta.helper} Course: {selectedCourseTitle}</p>
@@ -354,13 +432,22 @@ export default function CoursePlayerHubAdminPanel() {
               <Textarea id="hub-description" value={form.description} onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="hub-url">Primary URL</Label>
-              <Input id="hub-url" value={form.url} placeholder="Video, meeting, certificate, event, or community URL" onChange={(event) => setForm((prev) => ({ ...prev, url: event.target.value }))} />
+              <Label htmlFor="hub-url">{activeKind === "workshops" ? "Zoom join link" : activeKind === "communities" ? "In-app community link" : "Primary URL"}</Label>
+              <Input id="hub-url" value={form.url} placeholder={activeKind === "workshops" ? "https://zoom.us/j/..." : activeKind === "communities" ? "Optional internal or external community URL" : "Video, certificate, event, or content URL"} onChange={(event) => setForm((prev) => ({ ...prev, url: event.target.value }))} />
             </div>
             {(activeKind === "tutorials" || activeKind === "workshops") && (
               <div className="space-y-2">
-                <Label htmlFor="hub-secondary-url">{activeKind === "tutorials" ? "Thumbnail URL" : "Recording URL"}</Label>
-                <Input id="hub-secondary-url" value={form.secondaryUrl} onChange={(event) => setForm((prev) => ({ ...prev, secondaryUrl: event.target.value }))} />
+                <Label htmlFor="hub-secondary-url">{activeKind === "tutorials" ? "Thumbnail URL" : "Zoom recording URL / Supabase path"}</Label>
+                <div className="flex gap-2">
+                  <Input id="hub-secondary-url" value={form.secondaryUrl} placeholder={activeKind === "workshops" ? "Upload Zoom recording or paste a recording URL" : "Thumbnail URL"} onChange={(event) => setForm((prev) => ({ ...prev, secondaryUrl: event.target.value }))} />
+                  {activeKind === "workshops" && (
+                    <label className="inline-flex h-10 cursor-pointer items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent">
+                      <Upload className="mr-2 h-4 w-4" /> Upload
+                      <input type="file" accept="video/*" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) void handleWorkshopRecordingUpload(file); event.currentTarget.value = ""; }} />
+                    </label>
+                  )}
+                </div>
+                {activeKind === "workshops" && uploadProgress !== null && <p className="text-xs text-muted-foreground">Uploading recording: {uploadProgress}%</p>}
               </div>
             )}
             {(activeKind === "workshops" || activeKind === "events") && (
@@ -376,15 +463,25 @@ export default function CoursePlayerHubAdminPanel() {
               </>
             )}
             {activeKind === "workshops" && (
-              <div className="space-y-2">
-                <Label htmlFor="hub-status">Status</Label>
-                <select id="hub-status" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.status} onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}>
-                  <option value="scheduled">scheduled</option>
-                  <option value="live">live</option>
-                  <option value="completed">completed</option>
-                  <option value="cancelled">cancelled</option>
-                </select>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="hub-status">Status</Label>
+                  <select id="hub-status" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={form.status} onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value }))}>
+                    <option value="scheduled">scheduled</option>
+                    <option value="live">live</option>
+                    <option value="completed">completed</option>
+                    <option value="cancelled">cancelled</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hub-host">Host name</Label>
+                  <Input id="hub-host" value={form.hostName} placeholder="Zoom host or mentor name" onChange={(event) => setForm((prev) => ({ ...prev, hostName: event.target.value }))} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="hub-agenda">Zoom workshop agenda</Label>
+                  <Textarea id="hub-agenda" value={form.agenda} placeholder="One agenda item per line" onChange={(event) => setForm((prev) => ({ ...prev, agenda: event.target.value }))} />
+                </div>
+              </>
             )}
             {activeKind === "certifications" && (
               <div className="space-y-2">
@@ -405,10 +502,20 @@ export default function CoursePlayerHubAdminPanel() {
               </div>
             )}
             {activeKind === "communities" && (
-              <div className="space-y-2">
-                <Label htmlFor="hub-platform">Platform</Label>
-                <Input id="hub-platform" value={form.platform} placeholder="Discord, Slack, WhatsApp..." onChange={(event) => setForm((prev) => ({ ...prev, platform: event.target.value }))} />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="hub-platform">Platform</Label>
+                  <Input id="hub-platform" value={form.platform} placeholder="In-app + WhatsApp" onChange={(event) => setForm((prev) => ({ ...prev, platform: event.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hub-whatsapp">WhatsApp group/community link</Label>
+                  <Input id="hub-whatsapp" value={form.whatsappUrl} placeholder="https://chat.whatsapp.com/..." onChange={(event) => setForm((prev) => ({ ...prev, whatsappUrl: event.target.value }))} />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="hub-faq">Community FAQs</Label>
+                  <Textarea id="hub-faq" value={form.faq} placeholder="Question | Answer (shown in the learner in-app community)" onChange={(event) => setForm((prev) => ({ ...prev, faq: event.target.value }))} />
+                </div>
+              </>
             )}
             <div className="space-y-2">
               <Label htmlFor="hub-position">Position</Label>
@@ -442,6 +549,8 @@ export default function CoursePlayerHubAdminPanel() {
                     <p className="truncate font-medium">{item.title}</p>
                     {item.description && <p className="line-clamp-1 text-sm text-muted-foreground">{item.description}</p>}
                     <p className="text-xs text-muted-foreground">Position {String(item.position ?? 0)} · {item.is_active === false ? "Inactive" : "Active"}</p>
+                    {activeKind === "workshops" && String(item.recording_url || "") && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Upload className="h-3 w-3" /> Recording attached</p>}
+                    {activeKind === "communities" && String(item.whatsapp_url || "") && <p className="mt-1 flex items-center gap-1 text-xs text-green-700"><Link2 className="h-3 w-3" /> WhatsApp link configured</p>}
                   </div>
                   <Button size="sm" variant="outline" onClick={() => editItem(item)}>Edit</Button>
                   <Button size="sm" variant="destructive" onClick={() => deleteMutation.mutate(item.id)} disabled={deleteMutation.isPending}>

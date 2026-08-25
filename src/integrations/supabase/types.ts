@@ -1208,6 +1208,8 @@ platform_settings: {
           recording_url: string | null
           starts_at: string | null
           status: string
+          host_name: string | null
+          agenda: string[] | null
           title: string
           updated_at: string
         }
@@ -1223,6 +1225,8 @@ platform_settings: {
           recording_url?: string | null
           starts_at?: string | null
           status?: string
+          host_name?: string | null
+          agenda?: string[] | null
           title: string
           updated_at?: string
         }
@@ -1238,6 +1242,8 @@ platform_settings: {
           recording_url?: string | null
           starts_at?: string | null
           status?: string
+          host_name?: string | null
+          agenda?: string[] | null
           title?: string
           updated_at?: string
         }
@@ -1338,6 +1344,8 @@ platform_settings: {
       course_communities: {
         Row: {
           community_url: string | null
+          whatsapp_url: string | null
+          faq: Json | null
           course_id: string
           created_at: string
           description: string | null
@@ -1350,6 +1358,8 @@ platform_settings: {
         }
         Insert: {
           community_url?: string | null
+          whatsapp_url?: string | null
+          faq?: Json | null
           course_id: string
           created_at?: string
           description?: string | null
@@ -1362,6 +1372,8 @@ platform_settings: {
         }
         Update: {
           community_url?: string | null
+          whatsapp_url?: string | null
+          faq?: Json | null
           course_id?: string
           created_at?: string
           description?: string | null
@@ -1371,6 +1383,30 @@ platform_settings: {
           position?: number
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      course_community_messages: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          user_id?: string
         }
         Relationships: []
       }
